@@ -25,6 +25,8 @@ public class BlackjackGame : MonoBehaviour
    private int playerLives = 5;
    private int dealerLives = 5;
 
+    private CardVisual hiddenDealerCardVisual;
+
    public GameState CurrentState { get; private set; }
 
    void Start()
@@ -62,7 +64,7 @@ public class BlackjackGame : MonoBehaviour
 
         Card d2 = deck.DrawCard();
         dealerHand.AddCard(d2);
-        SpawnCardVisual(d2, dealerSlot2);
+        hiddenDealerCardVisual = SpawnCardVisual(d2, dealerSlot2, faceDown: true);
 
         CurrentState = GameState.PlayerTurn;
 
@@ -103,20 +105,24 @@ public class BlackjackGame : MonoBehaviour
 
    }
 
-   private void DealerTurn()
-   {
-    Debug.Log("Dealer reveals: " + dealerHand.Cards[1]);
-
-    while (dealerHand.GetScore() < 17)
+    private void DealerTurn()
     {
-        dealerHand.AddCard(deck.DrawCard());
-        Debug.Log("Dealer draws. Score: " + dealerHand.GetScore());
+        Debug.Log("Dealer reveals: " + dealerHand.Cards[1]);
+
+        if (hiddenDealerCardVisual != null)
+        {
+            hiddenDealerCardVisual.Reveal();
+        }
+
+        while (dealerHand.GetScore() < 17)
+        {
+            dealerHand.AddCard(deck.DrawCard());
+            Debug.Log("Dealer draws. Score: " + dealerHand.GetScore());
+        }
+
+        CurrentState = GameState.RoundResult;
+        EvaluateRound();
     }
-
-    CurrentState = GameState.RoundResult;
-    EvaluateRound();
-
-   }
 
     private void EvaluateRound()
     {
@@ -167,10 +173,11 @@ public class BlackjackGame : MonoBehaviour
         }
     }
 
-    private void SpawnCardVisual(Card card, Transform slot)
+    private CardVisual SpawnCardVisual(Card card, Transform slot, bool faceDown = false)
     {
         GameObject cardObject = Instantiate(cardPrefab, slot.position, slot.rotation);
         CardVisual visual = cardObject.GetComponent<CardVisual>();
-        visual.SetCard(card);
+        visual.SetCard(card, faceDown);
+        return visual;
     }
 }
