@@ -11,6 +11,13 @@ public enum GameState
 
 public class BlackjackGame : MonoBehaviour
 {
+
+    [SerializeField] private GameObject cardPrefab;
+    [SerializeField] private Transform playerSlot1;
+    [SerializeField] private Transform playerSlot2;
+    [SerializeField] private Transform dealerSlot1;
+    [SerializeField] private Transform dealerSlot2;
+
    private Deck deck;
    private Hand playerHand;
    private Hand dealerHand;
@@ -31,29 +38,38 @@ public class BlackjackGame : MonoBehaviour
    }
 
    public void StartRound()
-   {
-
-    if (CurrentState == GameState.GameOver)
     {
-        Debug.Log("Match is over. No more rounds.");
-        return;
-    }
+        if (CurrentState == GameState.GameOver)
+        {
+            Debug.Log("Match is over. No more rounds.");
+            return;
+        }
+
         playerHand.ClearHand();
         dealerHand.ClearHand();
 
-        playerHand.AddCard(deck.DrawCard());
-        playerHand.AddCard(deck.DrawCard());
+        Card p1 = deck.DrawCard();
+        playerHand.AddCard(p1);
+        SpawnCardVisual(p1, playerSlot1);
 
-        dealerHand.AddCard(deck.DrawCard());
-        dealerHand.AddCard(deck.DrawCard());
+        Card p2 = deck.DrawCard();
+        playerHand.AddCard(p2);
+        SpawnCardVisual(p2, playerSlot2);
+
+        Card d1 = deck.DrawCard();
+        dealerHand.AddCard(d1);
+        SpawnCardVisual(d1, dealerSlot1);
+
+        Card d2 = deck.DrawCard();
+        dealerHand.AddCard(d2);
+        SpawnCardVisual(d2, dealerSlot2);
 
         CurrentState = GameState.PlayerTurn;
 
-        Debug.Log("Round Started.");
+        Debug.Log("Round started.");
         Debug.Log("Player: " + playerHand.GetScore());
         Debug.Log("Dealer shows: " + dealerHand.Cards[0]);
-
-   }
+    }
 
    public void PlayerHit()
    {
@@ -149,5 +165,12 @@ public class BlackjackGame : MonoBehaviour
         {
             CurrentState = GameState.RoundResult;
         }
+    }
+
+    private void SpawnCardVisual(Card card, Transform slot)
+    {
+        GameObject cardObject = Instantiate(cardPrefab, slot.position, slot.rotation);
+        CardVisual visual = cardObject.GetComponent<CardVisual>();
+        visual.SetCard(card);
     }
 }
