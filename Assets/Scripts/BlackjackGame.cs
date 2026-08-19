@@ -30,8 +30,6 @@ public class BlackjackGame : MonoBehaviour
     private int playerLives = 5;
     private int dealerLives = 5;
 
-    private CardVisual hiddenDealerCardVisual;
-
     public GameState CurrentState { get; private set; }
 
     private void Start()
@@ -44,6 +42,10 @@ public class BlackjackGame : MonoBehaviour
 
         StartRound();
     }
+
+    // =========================================================
+    // ROUND
+    // =========================================================
 
     public void StartRound()
     {
@@ -58,6 +60,7 @@ public class BlackjackGame : MonoBehaviour
 
     private IEnumerator DealInitialCards()
     {
+        // We are dealing cards, so player can't interact yet.
         CurrentState = GameState.DealerTurn;
 
         ClearTable();
@@ -65,40 +68,50 @@ public class BlackjackGame : MonoBehaviour
         playerHand.ClearHand();
         dealerHand.ClearHand();
 
-        hiddenDealerCardVisual = null;
-
         UpdateScoreDisplay();
 
-        // Player card 1
+        // -----------------------------------------------------
+        // PLAYER: ONE CARD
+        // -----------------------------------------------------
+
         DealCardToPlayer(false);
 
         UpdateScoreDisplay();
 
+        Debug.Log(
+            "Player starts with " +
+            playerHand.GetScore()
+        );
+
         yield return new WaitForSeconds(timeBetweenCards);
 
-        // Dealer card 1
+        // -----------------------------------------------------
+        // DEALER: ONE CARD
+        // -----------------------------------------------------
+
         DealCardToDealer(false);
 
-        yield return new WaitForSeconds(timeBetweenCards);
-
-        // Player card 2
-        DealCardToPlayer(false);
-
-        UpdateScoreDisplay();
-
-        yield return new WaitForSeconds(timeBetweenCards);
-
-        // Dealer card 2 - hidden
-        DealCardToDealer(true);
+        Debug.Log(
+            "Dealer starts with " +
+            dealerHand.GetScore()
+        );
 
         yield return new WaitForSeconds(revealDelay);
+
+        // -----------------------------------------------------
+        // PLAYER TURN
+        // -----------------------------------------------------
 
         CurrentState = GameState.PlayerTurn;
 
         Debug.Log("Round started.");
         Debug.Log("Player: " + playerHand.GetScore());
-        Debug.Log("Dealer shows: " + dealerHand.Cards[0]);
+        Debug.Log("Dealer: " + dealerHand.GetScore());
     }
+
+    // =========================================================
+    // DEAL CARDS
+    // =========================================================
 
     private void DealCardToPlayer(bool faceDown)
     {
@@ -110,9 +123,23 @@ public class BlackjackGame : MonoBehaviour
 
         if (slotIndex >= playerSlots.Count)
         {
-            Debug.LogError("Not enough player slots!");
+            Debug.LogError(
+                "Not enough player slots! " +
+                "Player needs slot " +
+                slotIndex
+            );
+
             return;
         }
+
+        Debug.Log(
+            "[DEAL] Player drew: " +
+            card +
+            " (Value=" +
+            card.Value +
+            ") -> slot " +
+            slotIndex
+        );
 
         SpawnCardVisual(
             card,
@@ -131,21 +158,34 @@ public class BlackjackGame : MonoBehaviour
 
         if (slotIndex >= dealerSlots.Count)
         {
-            Debug.LogError("Not enough dealer slots!");
+            Debug.LogError(
+                "Not enough dealer slots! " +
+                "Dealer needs slot " +
+                slotIndex
+            );
+
             return;
         }
 
-        CardVisual visual = SpawnCardVisual(
+        Debug.Log(
+            "[DEAL] Dealer drew: " +
+            card +
+            " (Value=" +
+            card.Value +
+            ") -> slot " +
+            slotIndex
+        );
+
+        SpawnCardVisual(
             card,
             dealerSlots[slotIndex],
             faceDown
         );
-
-        if (faceDown)
-        {
-            hiddenDealerCardVisual = visual;
-        }
     }
+
+    // =========================================================
+    // PLAYER ACTIONS
+    // =========================================================
 
     public void PlayerHit()
     {
@@ -164,6 +204,7 @@ public class BlackjackGame : MonoBehaviour
             playerHand.GetScore()
         );
 
+        // Player busts immediately.
         if (playerHand.IsBust())
         {
             Debug.Log("Player busts!");
@@ -184,47 +225,60 @@ public class BlackjackGame : MonoBehaviour
 
         CurrentState = GameState.DealerTurn;
 
-        DealerTurn();
+        StartCoroutine(DealerTurnRoutine());
     }
 
-    private void DealerTurn()
+    // =========================================================
+    // DEALER AI
+    // =========================================================
+
+    private IEnumerator DealerTurnRoutine()
     {
         Debug.Log(
-            "Dealer reveals: " +
-            dealerHand.Cards[1]
+            "Dealer begins turn with " +
+            dealerHand.GetScore()
         );
 
-        if (hiddenDealerCardVisual != null)
-        {
-            hiddenDealerCardVisual.Reveal();
-        }
-
+        // If the player already busted, there is no reason
+        // for the dealer to draw.
         if (playerHand.IsBust())
         {
             CurrentState = GameState.RoundResult;
 
             EvaluateRound();
 
-            return;
+            yield break;
         }
 
+        // Dealer keeps drawing until reaching 17.
+        // Soft 17 is treated as a hit.
         while (
             dealerHand.GetScore() < 17 ||
             dealerHand.IsSoft17()
         )
         {
+            yield return new WaitForSeconds(
+                timeBetweenCards
+            );
+
             DealCardToDealer(false);
 
             Debug.Log(
-                "Dealer draws. Score: " +
+                "[DEALER] Draws. Score: " +
                 dealerHand.GetScore()
             );
 
+            // Stop immediately if dealer busts.
             if (dealerHand.IsBust())
             {
+                Debug.Log("Dealer busts!");
+
                 break;
             }
         }
+
+        // Small pause before result.
+        yield return new WaitForSeconds(0.5f);
 
         Debug.Log(
             "Dealer stands with " +
@@ -236,6 +290,10 @@ public class BlackjackGame : MonoBehaviour
         EvaluateRound();
     }
 
+    // =========================================================
+    // ROUND RESULT
+    // =========================================================
+
     private void EvaluateRound()
     {
         int playerScore = playerHand.GetScore();
@@ -244,7 +302,8 @@ public class BlackjackGame : MonoBehaviour
         if (playerHand.IsBust())
         {
             Debug.Log(
-                "RESULT: Player busts. Dealer wins the round."
+                "RESULT: Player busts. " +
+                "Dealer wins the round."
             );
 
             playerLives--;
@@ -252,7 +311,8 @@ public class BlackjackGame : MonoBehaviour
         else if (dealerHand.IsBust())
         {
             Debug.Log(
-                "RESULT: Dealer busts. Player wins the round."
+                "RESULT: Dealer busts. " +
+                "Player wins the round."
             );
 
             dealerLives--;
@@ -297,26 +357,36 @@ public class BlackjackGame : MonoBehaviour
             dealerLives
         );
 
+        // -----------------------------------------------------
+        // GAME OVER
+        // -----------------------------------------------------
+
         if (playerLives <= 0 || dealerLives <= 0)
         {
             CurrentState = GameState.GameOver;
 
-            if (playerLives <= 0 && dealerLives <= 0)
+            if (
+                playerLives <= 0 &&
+                dealerLives <= 0
+            )
             {
                 Debug.Log(
-                    "GAME OVER — Both ran out at once. Draw match."
+                    "GAME OVER — " +
+                    "Both ran out at once. Draw match."
                 );
             }
             else if (playerLives <= 0)
             {
                 Debug.Log(
-                    "GAME OVER — Dealer wins the match!"
+                    "GAME OVER — " +
+                    "Dealer wins the match!"
                 );
             }
             else
             {
                 Debug.Log(
-                    "GAME OVER — Player wins the match!"
+                    "GAME OVER — " +
+                    "Player wins the match!"
                 );
             }
         }
@@ -325,6 +395,10 @@ public class BlackjackGame : MonoBehaviour
             CurrentState = GameState.RoundResult;
         }
     }
+
+    // =========================================================
+    // CARD VISUAL
+    // =========================================================
 
     private CardVisual SpawnCardVisual(
         Card card,
@@ -345,16 +419,21 @@ public class BlackjackGame : MonoBehaviour
         if (visual == null)
         {
             Debug.LogError(
-                "Card prefab is missing CardVisual component!"
+                "Card prefab is missing " +
+                "CardVisual component!"
             );
 
             return null;
         }
 
-        // Every card starts face-down.
-        visual.SetCard(card, true);
+        // The visual system handles the artwork.
+        visual.SetCard(
+            card,
+            faceDown
+        );
 
-        // Normal cards reveal automatically.
+        // Normal cards are spawned face-down and then
+        // automatically flipped.
         if (!faceDown)
         {
             StartCoroutine(
@@ -369,13 +448,19 @@ public class BlackjackGame : MonoBehaviour
         CardVisual visual
     )
     {
-        yield return new WaitForSeconds(revealDelay);
+        yield return new WaitForSeconds(
+            revealDelay
+        );
 
         if (visual != null)
         {
             visual.Reveal();
         }
     }
+
+    // =========================================================
+    // SCORE
+    // =========================================================
 
     private void UpdateScoreDisplay()
     {
@@ -391,6 +476,10 @@ public class BlackjackGame : MonoBehaviour
         scoreText.text =
             playerHand.GetScore().ToString();
     }
+
+    // =========================================================
+    // TABLE CLEANUP
+    // =========================================================
 
     private void ClearTable()
     {
