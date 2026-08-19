@@ -52,4 +52,23 @@ public class Hand
     {
         return GetScore() == 21;
     }
+
+        public bool IsSoft17()
+    {
+        if (GetScore() != 17)
+            return false;
+
+        bool hasAce = false;
+
+        foreach (Card card in Cards)
+        {
+            if (card.Rank == Rank.One)
+            {
+                hasAce = true;
+                break;
+            }
+        }
+
+        return hasAce;
+    }
 }
