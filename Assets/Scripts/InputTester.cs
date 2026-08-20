@@ -15,4 +15,14 @@ void Update()
     if (Input.GetKeyDown(KeyCode.S)) game.PlayerStand();
     if (Input.GetKeyDown(KeyCode.N)) game.StartRound(); // N = next round
 }
+
+public void Hit()
+{
+    game.PlayerHit();
+}
+
+public void Stand()
+{
+    game.PlayerStand();
+}
 }
