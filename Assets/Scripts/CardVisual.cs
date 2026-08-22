@@ -9,6 +9,10 @@ public class CardVisual : MonoBehaviour
     [Header("Card Back")]
     [SerializeField] private Texture backTexture;
 
+    [Header("Dealing Animation")]
+    [SerializeField] private float dealDuration = 0.35f;
+    [SerializeField] private float dealArcHeight = 0.2f;
+
     private Card cardData;
     private bool isFaceDown;
 
@@ -68,6 +72,59 @@ public class CardVisual : MonoBehaviour
         isFaceDown = false;
 
         StartCoroutine(FlipAnimation());
+    }
+
+    public void DealTo(
+        Transform targetSlot,
+        bool revealOnArrival,
+        float revealDelay
+    )
+    {
+        StartCoroutine(
+            DealRoutine(
+                targetSlot,
+                revealOnArrival,
+                revealDelay
+            )
+        );
+    }
+
+    private IEnumerator DealRoutine(
+        Transform targetSlot,
+        bool revealOnArrival,
+        float revealDelay
+    )
+    {
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = targetSlot.position;
+        float elapsed = 0f;
+
+        while (elapsed < dealDuration)
+        {
+            elapsed += Time.deltaTime;
+
+            float t = Mathf.Clamp01(elapsed / dealDuration);
+            float smoothT = Mathf.SmoothStep(0f, 1f, t);
+            float arc = Mathf.Sin(t * Mathf.PI) * dealArcHeight;
+
+            transform.position =
+                Vector3.Lerp(
+                    startPosition,
+                    endPosition,
+                    smoothT
+                ) + Vector3.up * arc;
+
+            yield return null;
+        }
+
+        transform.position = endPosition;
+        transform.SetParent(targetSlot, true);
+
+        if (revealOnArrival)
+        {
+            yield return new WaitForSeconds(revealDelay);
+            Reveal();
+        }
     }
 
     private IEnumerator FlipAnimation()

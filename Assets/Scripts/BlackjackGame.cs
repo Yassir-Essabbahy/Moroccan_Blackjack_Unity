@@ -5,8 +5,13 @@ using System.Collections.Generic;
 
 public class BlackjackGame : MonoBehaviour
 {
+    [Header("Camera")]
+    [SerializeField] private BlackjackCameraDirector cameraDirector;
+
     [Header("Card")]
     [SerializeField] private GameObject cardPrefab;
+
+    [SerializeField] private Transform deckPosition;
 
     [Header("Player Card Slots")]
     [SerializeField] private List<Transform> playerSlots =
@@ -34,6 +39,9 @@ public class BlackjackGame : MonoBehaviour
 
     private void Start()
     {
+        if (cameraDirector == null)
+            cameraDirector = GetComponent<BlackjackCameraDirector>();
+
         deck = new Deck();
         playerHand = new Hand();
         dealerHand = new Hand();
@@ -55,6 +63,7 @@ public class BlackjackGame : MonoBehaviour
             return;
         }
 
+        cameraDirector?.ShowTable();
         StartCoroutine(DealInitialCards());
     }
 
@@ -74,6 +83,7 @@ public class BlackjackGame : MonoBehaviour
         // PLAYER: ONE CARD
         // -----------------------------------------------------
 
+        cameraDirector?.ShowPlayer();
         DealCardToPlayer(false);
 
         UpdateScoreDisplay();
@@ -89,6 +99,7 @@ public class BlackjackGame : MonoBehaviour
         // DEALER: ONE CARD
         // -----------------------------------------------------
 
+        cameraDirector?.ShowDealer();
         DealCardToDealer(false);
 
         Debug.Log(
@@ -103,6 +114,7 @@ public class BlackjackGame : MonoBehaviour
         // -----------------------------------------------------
 
         CurrentState = GameState.PlayerTurn;
+        cameraDirector?.ShowPlayer();
 
         Debug.Log("Round started.");
         Debug.Log("Player: " + playerHand.GetScore());
@@ -195,6 +207,7 @@ public class BlackjackGame : MonoBehaviour
             return;
         }
 
+        cameraDirector?.ShowPlayer();
         DealCardToPlayer(false);
 
         UpdateScoreDisplay();
@@ -224,6 +237,7 @@ public class BlackjackGame : MonoBehaviour
         }
 
         CurrentState = GameState.DealerTurn;
+        cameraDirector?.ShowDealer();
 
         StartCoroutine(DealerTurnRoutine());
     }
@@ -234,6 +248,7 @@ public class BlackjackGame : MonoBehaviour
 
     private IEnumerator DealerTurnRoutine()
     {
+        cameraDirector?.ShowDealer();
         Debug.Log(
             "Dealer begins turn with " +
             dealerHand.GetScore()
@@ -296,6 +311,7 @@ public class BlackjackGame : MonoBehaviour
 
     private void EvaluateRound()
     {
+        cameraDirector?.ShowTable();
         int playerScore = playerHand.GetScore();
         int dealerScore = dealerHand.GetScore();
 
@@ -406,11 +422,19 @@ public class BlackjackGame : MonoBehaviour
         bool faceDown = false
     )
     {
+        if (deckPosition == null)
+        {
+            Debug.LogError(
+                "Deck Position is not assigned on BlackjackGame!"
+            );
+
+            return null;
+        }
+
         GameObject cardObject = Instantiate(
             cardPrefab,
-            slot.position,
-            slot.rotation,
-            slot
+            deckPosition.position,
+            deckPosition.rotation
         );
 
         CardVisual visual =
@@ -427,35 +451,17 @@ public class BlackjackGame : MonoBehaviour
         }
 
         // The visual system handles the artwork.
-        visual.SetCard(
-            card,
-            faceDown
-        );
+        // Every dealt card leaves the deck face-down.
+        // Normal cards flip after reaching their slot.
+        visual.SetCard(card, true);
 
-        // Normal cards are spawned face-down and then
-        // automatically flipped.
-        if (!faceDown)
-        {
-            StartCoroutine(
-                RevealCardAfterDelay(visual)
-            );
-        }
-
-        return visual;
-    }
-
-    private IEnumerator RevealCardAfterDelay(
-        CardVisual visual
-    )
-    {
-        yield return new WaitForSeconds(
+        visual.DealTo(
+            slot,
+            !faceDown,
             revealDelay
         );
 
-        if (visual != null)
-        {
-            visual.Reveal();
-        }
+        return visual;
     }
 
     // =========================================================
