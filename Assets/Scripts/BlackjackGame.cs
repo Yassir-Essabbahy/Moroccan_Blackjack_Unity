@@ -3,12 +3,24 @@ using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
+public enum RoundOutcome
+{
+    PlayerWin,
+    DealerWin,
+    Push,
+    PlayerBust,
+    DealerBust
+}
+
 public class BlackjackGame : MonoBehaviour
 {
     [Header("Camera")]
     [SerializeField] private BlackjackCameraDirector cameraDirector;
 
-    [Header("Card")]
+    [Header("Dealer Dialogue")]
+    [SerializeField] private DealerDialogueSequence dealerDialogue;
+    [SerializeField] private float nextRoundDelay = 0.25f;
+
     [SerializeField] private GameObject cardPrefab;
 
     [SerializeField] private Transform deckPosition;
@@ -35,6 +47,7 @@ public class BlackjackGame : MonoBehaviour
 
     private int playerLives = 5;
     private int dealerLives = 5;
+    private bool isFinishingRound;
 
     public GameState CurrentState { get; private set; }
 
@@ -58,7 +71,7 @@ public class BlackjackGame : MonoBehaviour
 
     public void StartRound()
     {
-        if (CurrentState == GameState.GameOver)
+        if (CurrentState == GameState.GameOver || isFinishingRound)
         {
             Debug.Log("Match is over. No more rounds.");
             return;
@@ -335,102 +348,63 @@ public class BlackjackGame : MonoBehaviour
         cameraDirector?.ShowTable();
         int playerScore = playerHand.GetScore();
         int dealerScore = dealerHand.GetScore();
+        RoundOutcome outcome;
 
         if (playerHand.IsBust())
         {
-            Debug.Log(
-                "RESULT: Player busts. " +
-                "Dealer wins the round."
-            );
-
+            outcome = RoundOutcome.PlayerBust;
+            Debug.Log("RESULT: Player busts. Dealer wins the round.");
             playerLives--;
         }
         else if (dealerHand.IsBust())
         {
-            Debug.Log(
-                "RESULT: Dealer busts. " +
-                "Player wins the round."
-            );
-
+            outcome = RoundOutcome.DealerBust;
+            Debug.Log("RESULT: Dealer busts. Player wins the round.");
             dealerLives--;
         }
         else if (playerScore > dealerScore)
         {
-            Debug.Log(
-                "RESULT: Player wins! " +
-                playerScore +
-                " vs " +
-                dealerScore
-            );
-
+            outcome = RoundOutcome.PlayerWin;
+            Debug.Log("RESULT: Player wins! " + playerScore + " vs " + dealerScore);
             dealerLives--;
         }
         else if (playerScore < dealerScore)
         {
-            Debug.Log(
-                "RESULT: Dealer wins. " +
-                playerScore +
-                " vs " +
-                dealerScore
-            );
-
+            outcome = RoundOutcome.DealerWin;
+            Debug.Log("RESULT: Dealer wins. " + playerScore + " vs " + dealerScore);
             playerLives--;
         }
         else
         {
-            Debug.Log(
-                "RESULT: Draw. " +
-                playerScore +
-                " vs " +
-                dealerScore +
-                ". No lives lost."
-            );
+            outcome = RoundOutcome.Push;
+            Debug.Log("RESULT: Draw. " + playerScore + " vs " + dealerScore + ". No lives lost.");
         }
 
-        Debug.Log(
-            "Lives — Player: " +
-            playerLives +
-            " | Dealer: " +
-            dealerLives
-        );
+        Debug.Log("Lives — Player: " + playerLives + " | Dealer: " + dealerLives);
+        bool gameOver = playerLives <= 0 || dealerLives <= 0;
+        CurrentState = gameOver ? GameState.GameOver : GameState.RoundResult;
+        isFinishingRound = true;
+        StartCoroutine(FinishRoundRoutine(outcome, gameOver));
+    }
 
-        // -----------------------------------------------------
-        // GAME OVER
-        // -----------------------------------------------------
-
-        if (playerLives <= 0 || dealerLives <= 0)
+    private IEnumerator FinishRoundRoutine(RoundOutcome outcome, bool gameOver)
+    {
+        if (dealerDialogue != null)
         {
-            CurrentState = GameState.GameOver;
+            bool completed = false;
+            yield return dealerDialogue.Play(cameraDirector, outcome, () => completed = true);
+            yield return new WaitUntil(() => completed);
+        }
 
-            if (
-                playerLives <= 0 &&
-                dealerLives <= 0
-            )
-            {
-                Debug.Log(
-                    "GAME OVER — " +
-                    "Both ran out at once. Draw match."
-                );
-            }
-            else if (playerLives <= 0)
-            {
-                Debug.Log(
-                    "GAME OVER — " +
-                    "Dealer wins the match!"
-                );
-            }
-            else
-            {
-                Debug.Log(
-                    "GAME OVER — " +
-                    "Player wins the match!"
-                );
-            }
-        }
-        else
+        if (gameOver)
         {
-            CurrentState = GameState.RoundResult;
+            isFinishingRound = false;
+            yield break;
         }
+
+        yield return new WaitForSeconds(nextRoundDelay);
+        isFinishingRound = false;
+        StartRound();
     }
 
     // =========================================================
