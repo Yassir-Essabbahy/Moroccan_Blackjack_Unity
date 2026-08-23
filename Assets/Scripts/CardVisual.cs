@@ -18,6 +18,8 @@ public class CardVisual : MonoBehaviour
 
     private Texture frontTexture;
 
+    public bool DealFinished { get; private set; } = true;
+
     public void SetCard(Card card, bool faceDown = false)
     {
         cardData = card;
@@ -80,6 +82,8 @@ public class CardVisual : MonoBehaviour
         float revealDelay
     )
     {
+        DealFinished = false;
+
         StartCoroutine(
             DealRoutine(
                 targetSlot,
@@ -123,11 +127,21 @@ public class CardVisual : MonoBehaviour
         if (revealOnArrival)
         {
             yield return new WaitForSeconds(revealDelay);
+
             Reveal();
+
+            yield return FlipRoutine();
         }
+
+        DealFinished = true;
     }
 
     private IEnumerator FlipAnimation()
+    {
+        yield return FlipRoutine();
+    }
+
+    private IEnumerator FlipRoutine()
     {
         float duration = 0.4f;
         float elapsed = 0f;

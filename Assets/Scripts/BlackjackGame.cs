@@ -27,6 +27,7 @@ public class BlackjackGame : MonoBehaviour
     [Header("Dealing")]
     [SerializeField] private float timeBetweenCards = 0.4f;
     [SerializeField] private float revealDelay = 0.25f;
+    [SerializeField] private float viewSwitchDelay = 0.4f;
 
     private Deck deck;
     private Hand playerHand;
@@ -80,11 +81,15 @@ public class BlackjackGame : MonoBehaviour
         UpdateScoreDisplay();
 
         // -----------------------------------------------------
-        // PLAYER: ONE CARD
+        // PLAYER: ONE CARD — wait until it lands and flips
         // -----------------------------------------------------
 
         cameraDirector?.ShowPlayer();
-        DealCardToPlayer(false);
+
+        yield return new WaitForSeconds(viewSwitchDelay);
+
+        CardVisual playerCard =
+            DealCardToPlayer(false);
 
         UpdateScoreDisplay();
 
@@ -93,39 +98,55 @@ public class BlackjackGame : MonoBehaviour
             playerHand.GetScore()
         );
 
-        yield return new WaitForSeconds(timeBetweenCards);
+        yield return WaitUntilCardDone(playerCard);
 
         // -----------------------------------------------------
-        // DEALER: ONE CARD
+        // DEALER: ONE CARD — wait until it lands and flips
         // -----------------------------------------------------
 
         cameraDirector?.ShowDealer();
-        DealCardToDealer(false);
+
+        yield return new WaitForSeconds(viewSwitchDelay);
+
+        CardVisual dealerCard =
+            DealCardToDealer(false);
 
         Debug.Log(
             "Dealer starts with " +
             dealerHand.GetScore()
         );
 
-        yield return new WaitForSeconds(revealDelay);
+        yield return WaitUntilCardDone(dealerCard);
 
         // -----------------------------------------------------
-        // PLAYER TURN
+        // TABLE VIEW FOR THE REST OF THE ROUND
         // -----------------------------------------------------
 
         CurrentState = GameState.PlayerTurn;
-        cameraDirector?.ShowPlayer();
+        cameraDirector?.ShowTable();
 
         Debug.Log("Round started.");
         Debug.Log("Player: " + playerHand.GetScore());
         Debug.Log("Dealer: " + dealerHand.GetScore());
     }
 
+    private IEnumerator WaitUntilCardDone(
+        CardVisual card
+    )
+    {
+        if (card == null)
+            yield break;
+
+        yield return new WaitUntil(
+            () => card.DealFinished
+        );
+    }
+
     // =========================================================
     // DEAL CARDS
     // =========================================================
 
-    private void DealCardToPlayer(bool faceDown)
+    private CardVisual DealCardToPlayer(bool faceDown)
     {
         Card card = deck.DrawCard();
 
@@ -141,7 +162,7 @@ public class BlackjackGame : MonoBehaviour
                 slotIndex
             );
 
-            return;
+            return null;
         }
 
         Debug.Log(
@@ -153,14 +174,14 @@ public class BlackjackGame : MonoBehaviour
             slotIndex
         );
 
-        SpawnCardVisual(
+        return SpawnCardVisual(
             card,
             playerSlots[slotIndex],
             faceDown
         );
     }
 
-    private void DealCardToDealer(bool faceDown)
+    private CardVisual DealCardToDealer(bool faceDown)
     {
         Card card = deck.DrawCard();
 
@@ -176,7 +197,7 @@ public class BlackjackGame : MonoBehaviour
                 slotIndex
             );
 
-            return;
+            return null;
         }
 
         Debug.Log(
@@ -188,7 +209,7 @@ public class BlackjackGame : MonoBehaviour
             slotIndex
         );
 
-        SpawnCardVisual(
+        return SpawnCardVisual(
             card,
             dealerSlots[slotIndex],
             faceDown
@@ -207,7 +228,6 @@ public class BlackjackGame : MonoBehaviour
             return;
         }
 
-        cameraDirector?.ShowPlayer();
         DealCardToPlayer(false);
 
         UpdateScoreDisplay();
@@ -237,7 +257,6 @@ public class BlackjackGame : MonoBehaviour
         }
 
         CurrentState = GameState.DealerTurn;
-        cameraDirector?.ShowDealer();
 
         StartCoroutine(DealerTurnRoutine());
     }
@@ -248,7 +267,6 @@ public class BlackjackGame : MonoBehaviour
 
     private IEnumerator DealerTurnRoutine()
     {
-        cameraDirector?.ShowDealer();
         Debug.Log(
             "Dealer begins turn with " +
             dealerHand.GetScore()
@@ -276,7 +294,10 @@ public class BlackjackGame : MonoBehaviour
                 timeBetweenCards
             );
 
-            DealCardToDealer(false);
+            CardVisual dealtCard =
+                DealCardToDealer(false);
+
+            yield return WaitUntilCardDone(dealtCard);
 
             Debug.Log(
                 "[DEALER] Draws. Score: " +

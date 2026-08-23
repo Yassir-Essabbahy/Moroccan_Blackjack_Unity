@@ -26,9 +26,12 @@ public class BlackjackCameraDirector : MonoBehaviour
 
     private void ResolveReferences()
     {
-        tableOverview ??= FindCamera("CM_TableOverview");
-        playerFocus ??= FindCamera("CM_PlayerFocus");
-        dealerFocus ??= FindCamera("CM_DealerFocus");
+        if (tableOverview == null)
+            tableOverview = FindCamera("CM_TableOverview");
+        if (playerFocus == null)
+            playerFocus = FindCamera("CM_PlayerFocus");
+        if (dealerFocus == null)
+            dealerFocus = FindCamera("CM_DealerFocus");
     }
 
     private CinemachineCamera FindCamera(string cameraName)
