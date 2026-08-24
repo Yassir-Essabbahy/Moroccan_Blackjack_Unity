@@ -18,6 +18,7 @@ public class DealerDialogueSequence : MonoBehaviour
     [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private Animator dealerAnimator;
     [SerializeField] private AudioSource voiceSource;
+    [SerializeField] private ReactiveMusicController reactiveMusic;
     [SerializeField] private string talkingAnimation = "Talking";
     [SerializeField] private string reactingAnimation = "Reacting";
     [SerializeField] private string idleAnimation = "Idle";
@@ -47,13 +48,19 @@ public class DealerDialogueSequence : MonoBehaviour
         new DialogueOption { line = "You got me this time." }
     };
 
+    private void Awake()
+    {
+        if (reactiveMusic == null)
+            reactiveMusic = GetComponent<ReactiveMusicController>();
+    }
     public IEnumerator Play(BlackjackCameraDirector cameraDirector, RoundOutcome outcome, Action onComplete)
     {
         DialogueOption option = Pick(GetOptions(outcome));
         string line = option == null ? string.Empty : option.line;
 
-        cameraDirector?.ShowDealer();
-        yield return new WaitForSeconds(cameraTransitionDuration);
+        yield return reactiveMusic != null
+            ? reactiveMusic.TransitionToCinematic(() => cameraDirector?.ShowDealer())
+            : ShowDealerFallback(cameraDirector);
 
         SetAnimation(outcome);
         Show(line);
@@ -67,10 +74,24 @@ public class DealerDialogueSequence : MonoBehaviour
             voiceSource.Stop();
         Hide();
         SetAnimationName(idleAnimation);
-        cameraDirector?.ShowTable();
-        yield return new WaitForSeconds(cameraTransitionDuration);
+        yield return reactiveMusic != null
+            ? reactiveMusic.TransitionToTable(() => cameraDirector?.ShowTable())
+            : ShowTableFallback(cameraDirector);
         onComplete?.Invoke();
     }
+
+    private IEnumerator ShowDealerFallback(BlackjackCameraDirector cameraDirector)
+    {
+        cameraDirector?.ShowDealer();
+        yield return new WaitForSeconds(cameraTransitionDuration);
+    }
+
+    private IEnumerator ShowTableFallback(BlackjackCameraDirector cameraDirector)
+    {
+        cameraDirector?.ShowTable();
+        yield return new WaitForSeconds(cameraTransitionDuration);
+    }
+
 
     private DialogueOption[] GetOptions(RoundOutcome outcome)
     {
