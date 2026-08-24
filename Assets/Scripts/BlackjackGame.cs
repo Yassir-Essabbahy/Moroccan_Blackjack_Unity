@@ -37,6 +37,7 @@ public class BlackjackGame : MonoBehaviour
 
     [Header("Score Display")]
     [SerializeField] private TextMeshPro scoreText;
+    [SerializeField] private TextMeshPro dealerScoreText;
 
     [Header("Dealing")]
     [SerializeField] private float timeBetweenCards = 0.4f;
@@ -125,6 +126,8 @@ public class BlackjackGame : MonoBehaviour
 
         CardVisual dealerCard =
             DealCardToDealer(false);
+        UpdateScoreDisplay();
+
 
         Debug.Log(
             "Dealer starts with " +
@@ -312,6 +315,9 @@ public class BlackjackGame : MonoBehaviour
             CardVisual dealtCard =
                 DealCardToDealer(false);
 
+            UpdateScoreDisplay();
+
+
             yield return WaitUntilCardDone(dealtCard);
 
             Debug.Log(
@@ -483,6 +489,9 @@ public class BlackjackGame : MonoBehaviour
 
         scoreText.text =
             playerHand.GetScore().ToString();
+        if (dealerScoreText != null)
+            dealerScoreText.text = dealerHand == null ? "0" : dealerHand.GetScore().ToString();
+
     }
 
     // =========================================================
