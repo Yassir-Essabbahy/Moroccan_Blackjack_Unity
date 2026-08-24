@@ -20,6 +20,7 @@ public class BlackjackGame : MonoBehaviour
     [Header("Dealer Dialogue")]
     [SerializeField] private DealerDialogueSequence dealerDialogue;
     [SerializeField] private PenaltyStation penaltyStation;
+    [SerializeField] private FingerHealthController fingerHealth;
     [SerializeField] private float nextRoundDelay = 0.25f;
 
     [SerializeField] private GameObject cardPrefab;
@@ -383,6 +384,8 @@ public class BlackjackGame : MonoBehaviour
 
         Debug.Log("Lives — Player: " + playerLives + " | Dealer: " + dealerLives);
         bool gameOver = playerLives <= 0 || dealerLives <= 0;
+        if (fingerHealth != null && fingerHealth.CurrentFingers <= 0)
+            gameOver = true;
         CurrentState = gameOver ? GameState.GameOver : GameState.RoundResult;
         isFinishingRound = true;
         StartCoroutine(FinishRoundRoutine(outcome, gameOver));
@@ -390,14 +393,15 @@ public class BlackjackGame : MonoBehaviour
 
     private IEnumerator FinishRoundRoutine(RoundOutcome outcome, bool gameOver)
     {
-        if (penaltyStation != null && (outcome == RoundOutcome.DealerWin || outcome == RoundOutcome.PlayerBust))
-            yield return penaltyStation.PlayLossSequence();
-
+        if (dealerDialogue != null)
         {
             bool completed = false;
             yield return dealerDialogue.Play(cameraDirector, outcome, () => completed = true);
             yield return new WaitUntil(() => completed);
         }
+
+        if (penaltyStation != null && (outcome == RoundOutcome.DealerWin || outcome == RoundOutcome.PlayerBust))
+            yield return penaltyStation.PlayLossSequence();
 
         if (gameOver)
         {

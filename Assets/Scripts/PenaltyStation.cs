@@ -3,52 +3,51 @@ using UnityEngine;
 
 public class PenaltyStation : MonoBehaviour
 {
-    [SerializeField] private Transform hammer;
-    [SerializeField] private Transform hammerRest;
-    [SerializeField] private Transform hammerStrike;
+    [SerializeField] private Animator hammerAnimator;
+    [SerializeField] private string strikeTrigger = "Strike";
+    [SerializeField, Range(0f, 1f)] private float impactNormalizedTime = 0.65f;
+    [SerializeField, Min(0f)] private float impactDelay;
     [SerializeField] private AudioSource impactAudio;
     [SerializeField] private Light impactLight;
     [SerializeField] private BlackjackCameraDirector cameraDirector;
-    [SerializeField] private ReactiveMusicController music;
+    [SerializeField] private FingerHealthController fingerHealth;
     [SerializeField, Min(0.1f)] private float cameraHold = 0.5f;
-    [SerializeField, Min(0.1f)] private float liftDuration = 0.35f;
-    [SerializeField, Min(0.05f)] private float strikeDuration = 0.16f;
-    [SerializeField, Min(0.1f)] private float recoverDuration = 0.45f;
+    [SerializeField, Min(0.1f)] private float strikeClipLength = 0.7f;
+    [SerializeField, Min(0.1f)] private float returnClipLength = 0.5f;
     [SerializeField, Min(0f)] private float flashDuration = 0.08f;
-    [SerializeField] private int remainingFingerCount = 4;
-    public int RemainingFingerCount => remainingFingerCount;
+    private bool sequenceRunning;
+
+    private void Awake()
+    {
+        if (hammerAnimator == null)
+            return;
+        hammerAnimator.ResetTrigger(strikeTrigger);
+        hammerAnimator.Play("Rest", 0, 0f);
+        hammerAnimator.Update(0f);
+    }
 
     public IEnumerator PlayLossSequence()
     {
-        if (cameraDirector != null)
-            cameraDirector.ShowPenalty();
+        if (sequenceRunning)
+            yield break;
+        sequenceRunning = true;
+        cameraDirector?.ShowPenalty();
         yield return new WaitForSecondsRealtime(cameraHold);
-        yield return MoveHammer(hammerRest, liftDuration);
-        yield return new WaitForSecondsRealtime(0.18f);
-        yield return MoveHammer(hammerStrike, strikeDuration);
-        if (impactAudio != null) impactAudio.Play();
-        if (impactLight != null) yield return FlashImpact();
-        remainingFingerCount = Mathf.Max(0, remainingFingerCount - 1);
-        yield return MoveHammer(hammerRest, recoverDuration);
-        if (cameraDirector != null)
-            cameraDirector.ShowTable();
-    }
-
-    private IEnumerator MoveHammer(Transform target, float duration)
-    {
-        if (hammer == null || target == null) yield break;
-        Vector3 startPosition = hammer.position;
-        Quaternion startRotation = hammer.rotation;
-        float elapsed = 0f;
-        while (elapsed < duration)
+        if (hammerAnimator == null)
         {
-            elapsed += Time.unscaledDeltaTime;
-            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
-            hammer.position = Vector3.Lerp(startPosition, target.position, t);
-            hammer.rotation = Quaternion.Slerp(startRotation, target.rotation, t);
-            yield return null;
+            sequenceRunning = false;
+            yield break;
         }
-        hammer.SetPositionAndRotation(target.position, target.rotation);
+        hammerAnimator.ResetTrigger(strikeTrigger);
+        hammerAnimator.SetTrigger(strikeTrigger);
+        float delay = impactDelay > 0f ? impactDelay : strikeClipLength * impactNormalizedTime;
+        yield return new WaitForSecondsRealtime(delay);
+        impactAudio?.Play();
+        if (impactLight != null) yield return FlashImpact();
+        fingerHealth?.LoseOneFinger();
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, strikeClipLength - delay) + returnClipLength);
+        cameraDirector?.ShowTable();
+        sequenceRunning = false;
     }
 
     private IEnumerator FlashImpact()

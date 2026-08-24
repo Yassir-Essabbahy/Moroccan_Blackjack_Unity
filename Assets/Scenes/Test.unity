@@ -440,15 +440,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.222
+      value: -0.081
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.63399994
+      value: 0.6339999
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.42599988
+      value: 0.4259999
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -485,7 +485,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 592925970}
   m_SourcePrefab: {fileID: 100100000, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
 --- !u!4 &74170729 stripped
 Transform:
@@ -2134,6 +2137,33 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3e20a3984e15ae04c961e13729afd4d0, type: 3}
+--- !u!1 &592925967 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 028ed26cdf21b794f8db14adb015496b, type: 3}
+  m_PrefabInstance: {fileID: 74170728}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &592925970
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 592925967}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 64a39d6032e4a264898644233090a000, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 2
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &595211196
 GameObject:
   m_ObjectHideFlags: 0
@@ -2159,7 +2189,7 @@ Transform:
   m_GameObject: {fileID: 595211196}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.25, y: 0.06, z: 0.15}
+  m_LocalPosition: {x: 0.411, y: 0.414, z: 0.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2463,13 +2493,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 636280194}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.27563736, y: -0, z: -0, w: 0.9612617}
-  m_LocalPosition: {x: -254.43835, y: 1.15, z: -227.81413}
+  m_LocalRotation: {x: 0.40495443, y: -0.1800033, z: 0.08165313, w: 0.89271694}
+  m_LocalPosition: {x: -254.034, y: 1.865, z: -228.751}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2136651540}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 48.8, y: -22.8, z: 0}
 --- !u!1 &641204552
 GameObject:
   m_ObjectHideFlags: 0
@@ -2713,7 +2743,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BlackjackGame
   cameraDirector: {fileID: 963819449}
   dealerDialogue: {fileID: 963819450}
-  penaltyStation: {fileID: 0}
+  penaltyStation: {fileID: 1609588198}
+  fingerHealth: {fileID: 1609588200}
   nextRoundDelay: 0.25
   cardPrefab: {fileID: 651288795344652631, guid: 8da10e8a204d0b640a22f094716ee730, type: 3}
   deckPosition: {fileID: 641204553}
@@ -4035,6 +4066,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1609588199}
   - component: {fileID: 1609588198}
+  - component: {fileID: 1609588200}
   m_Layer: 0
   m_Name: PenaltyStation
   m_TagString: Untagged
@@ -4054,19 +4086,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 559bc6455d385944f859bfeacbbce29b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PenaltyStation
-  hammer: {fileID: 74170729}
-  hammerRest: {fileID: 1181911701}
-  hammerStrike: {fileID: 595211197}
+  hammerAnimator: {fileID: 592925970}
+  strikeTrigger: Strike
+  impactNormalizedTime: 0.65
+  impactDelay: 0
   impactAudio: {fileID: 1732041459}
   impactLight: {fileID: 0}
   cameraDirector: {fileID: 963819449}
-  music: {fileID: 148876129}
+  fingerHealth: {fileID: 1609588200}
   cameraHold: 0.5
-  liftDuration: 0.35
-  strikeDuration: 0.16
-  recoverDuration: 0.45
+  strikeClipLength: 0.7
+  returnClipLength: 0.5
   flashDuration: 0.08
-  remainingFingerCount: 4
 --- !u!4 &1609588199
 Transform:
   m_ObjectHideFlags: 0
@@ -4088,6 +4119,23 @@ Transform:
   - {fileID: 74170729}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1609588200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1609588197}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc89b1a96c355704aa3042ae55f35c60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FingerHealthController
+  playerHandAnimator: {fileID: 919132148946710833}
+  dealerHandAnimator: {fileID: 0}
+  startingFingerCount: 5
+  uiDisplay: {fileID: 0}
+  animatorParameter: FingersRemaining
 --- !u!1 &1716222422
 GameObject:
   m_ObjectHideFlags: 0
@@ -6461,7 +6509,7 @@ Animator:
   m_GameObject: {fileID: 919132148946710832}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 7b4642a047a2b6746a66742ceb4f97bf, type: 2}
+  m_Controller: {fileID: 9100000, guid: 1ae898036868a2e449c3056ee7723dd2, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
