@@ -19,6 +19,7 @@ public class BlackjackGame : MonoBehaviour
 
     [Header("Dealer Dialogue")]
     [SerializeField] private DealerDialogueSequence dealerDialogue;
+    [SerializeField] private PenaltyStation penaltyStation;
     [SerializeField] private float nextRoundDelay = 0.25f;
 
     [SerializeField] private GameObject cardPrefab;
@@ -389,7 +390,9 @@ public class BlackjackGame : MonoBehaviour
 
     private IEnumerator FinishRoundRoutine(RoundOutcome outcome, bool gameOver)
     {
-        if (dealerDialogue != null)
+        if (penaltyStation != null && (outcome == RoundOutcome.DealerWin || outcome == RoundOutcome.PlayerBust))
+            yield return penaltyStation.PlayLossSequence();
+
         {
             bool completed = false;
             yield return dealerDialogue.Play(cameraDirector, outcome, () => completed = true);

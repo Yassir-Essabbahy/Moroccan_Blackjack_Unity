@@ -7,6 +7,7 @@ public class BlackjackCameraDirector : MonoBehaviour
     [SerializeField] private CinemachineCamera tableOverview;
     [SerializeField] private CinemachineCamera playerFocus;
     [SerializeField] private CinemachineCamera dealerFocus;
+    [SerializeField] private CinemachineCamera penaltyCamera;
     [Header("Priorities")]
     [SerializeField] private int inactivePriority = 10;
     [SerializeField] private int activePriority = 30;
@@ -30,6 +31,10 @@ public class BlackjackCameraDirector : MonoBehaviour
     private float motionTime;
     private float beatPulse;
     private float targetPulse;
+
+    public void ShowDealer() => Activate(dealerFocus);
+    public void ShowPenalty() => Activate(penaltyCamera);
+
 
     private void Awake()
     {
@@ -63,7 +68,6 @@ public class BlackjackCameraDirector : MonoBehaviour
 
     public void ShowTable() => Activate(tableOverview);
     public void ShowPlayer() => Activate(playerFocus);
-    public void ShowDealer() { CacheDealerDefaults(); Activate(dealerFocus); }
 
     private void OnStrongBeat()
     {
