@@ -3405,8 +3405,11 @@ MonoBehaviour:
   moneyPrefab: {fileID: 8566004165924570556, guid: 217b1a3466f612646bee2a829c667402, type: 3}
   dropSound: {fileID: 0}
   audioSource: {fileID: 0}
+  moneyPoint: {fileID: 632819126}
+  tableSurfaceY: 0.93041193
   baseStackPosition: {x: -0.75, y: 0.97, z: -0.85}
   baseRotation: {x: 0, y: -25, z: -90}
+  randomYawRange: 20
   stackHeightStep: 0.045
   dropHeight: 1.6
   dropDuration: 0.55

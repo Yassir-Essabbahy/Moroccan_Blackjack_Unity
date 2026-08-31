@@ -9,9 +9,14 @@ public class MoneyStackManager : MonoBehaviour
     [SerializeField] private AudioClip dropSound;
     [SerializeField] private AudioSource audioSource;
 
+    [Header("Money Point Reference")]
+    [SerializeField] private Transform moneyPoint;
+    [SerializeField] private float tableSurfaceY = 0.94f;
+
     [Header("Stack Positioning")]
-    [SerializeField] private Vector3 baseStackPosition = new Vector3(-0.75f, 0.97f, -0.85f);
+    [SerializeField] private Vector3 baseStackPosition = new Vector3(-1.71f, 0.94f, -1.63f);
     [SerializeField] private Vector3 baseRotation = new Vector3(0f, -25f, -90f);
+    [SerializeField] private float randomYawRange = 20f;
     [SerializeField] private float stackHeightStep = 0.045f;
     [SerializeField] private float dropHeight = 1.6f;
     [SerializeField] private float dropDuration = 0.55f;
@@ -20,6 +25,12 @@ public class MoneyStackManager : MonoBehaviour
 
     private void Awake()
     {
+        if (moneyPoint == null)
+        {
+            var mp = GameObject.Find("MoneyPoint");
+            if (mp != null) moneyPoint = mp.transform;
+        }
+
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
@@ -34,22 +45,40 @@ public class MoneyStackManager : MonoBehaviour
             return;
         }
 
-        Vector3 targetPos = baseStackPosition + new Vector3(
-            Random.Range(-0.02f, 0.02f),
-            stackIndex * stackHeightStep,
-            Random.Range(-0.02f, 0.02f)
-        );
+        Vector3 spawnPos;
+        Vector3 targetLandingPos;
 
+        if (moneyPoint != null)
+        {
+            spawnPos = moneyPoint.position;
+            targetLandingPos = new Vector3(
+                moneyPoint.position.x + Random.Range(-0.02f, 0.02f),
+                tableSurfaceY + stackIndex * stackHeightStep,
+                moneyPoint.position.z + Random.Range(-0.02f, 0.02f)
+            );
+        }
+        else
+        {
+            targetLandingPos = baseStackPosition + new Vector3(
+                Random.Range(-0.02f, 0.02f),
+                stackIndex * stackHeightStep,
+                Random.Range(-0.02f, 0.02f)
+            );
+            spawnPos = targetLandingPos + Vector3.up * dropHeight;
+        }
+
+        // Randomize rotation ONLY on one axis (Y-axis yaw spin)
+        float randomYaw = Random.Range(-randomYawRange, randomYawRange);
         Quaternion targetRot = Quaternion.Euler(
             baseRotation.x,
-            baseRotation.y + Random.Range(-6f, 6f),
+            baseRotation.y + randomYaw,
             baseRotation.z
         );
 
-        GameObject stackObj = Instantiate(moneyPrefab, targetPos + Vector3.up * dropHeight, targetRot);
+        GameObject stackObj = Instantiate(moneyPrefab, spawnPos, targetRot);
         spawnedStacks.Add(stackObj);
 
-        StartCoroutine(AnimateDrop(stackObj, targetPos));
+        StartCoroutine(AnimateDrop(stackObj, targetLandingPos));
     }
 
     private IEnumerator AnimateDrop(GameObject stackObj, Vector3 targetPos)
