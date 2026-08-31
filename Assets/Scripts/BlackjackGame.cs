@@ -39,6 +39,11 @@ public class BlackjackGame : MonoBehaviour
     [SerializeField] private TextMeshPro scoreText;
     [SerializeField] private TextMeshPro dealerScoreText;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource cardAudioSource;
+    [SerializeField] private AudioClip[] cardTakeSounds;
+    [SerializeField] private Vector2 pitchVariation = new Vector2(0.92f, 1.08f);
+
     [Header("Dealing")]
     [SerializeField] private float timeBetweenCards = 0.4f;
     [SerializeField] private float revealDelay = 0.25f;
@@ -58,6 +63,11 @@ public class BlackjackGame : MonoBehaviour
     {
         if (cameraDirector == null)
             cameraDirector = GetComponent<BlackjackCameraDirector>();
+
+        if (cardAudioSource == null)
+            cardAudioSource = GetComponent<AudioSource>();
+        if (cardAudioSource == null)
+            cardAudioSource = gameObject.AddComponent<AudioSource>();
 
         deck = new Deck();
         playerHand = new Hand();
@@ -463,6 +473,8 @@ public class BlackjackGame : MonoBehaviour
         // Normal cards flip after reaching their slot.
         visual.SetCard(card, true);
 
+        PlayCardTakeSound();
+
         visual.DealTo(
             slot,
             !faceDown,
@@ -470,6 +482,27 @@ public class BlackjackGame : MonoBehaviour
         );
 
         return visual;
+    }
+
+    private void PlayCardTakeSound()
+    {
+        if (cardTakeSounds == null || cardTakeSounds.Length == 0)
+            return;
+
+        AudioClip clip = cardTakeSounds[Random.Range(0, cardTakeSounds.Length)];
+        if (clip == null)
+            return;
+
+        if (cardAudioSource != null)
+        {
+            cardAudioSource.pitch = Random.Range(pitchVariation.x, pitchVariation.y);
+            cardAudioSource.PlayOneShot(clip);
+        }
+        else
+        {
+            Vector3 spawnPos = deckPosition != null ? deckPosition.position : transform.position;
+            AudioSource.PlayClipAtPoint(clip, spawnPos);
+        }
     }
 
     // =========================================================
