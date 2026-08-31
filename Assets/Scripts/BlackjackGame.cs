@@ -39,6 +39,13 @@ public class BlackjackGame : MonoBehaviour
     [SerializeField] private TextMeshPro scoreText;
     [SerializeField] private TextMeshPro dealerScoreText;
 
+    [Header("Loan Shark & Stakes")]
+    [SerializeField] private int startingDebt = 5000;
+    [SerializeField] private int debtPerWin = 1000;
+    [SerializeField] private DebtHUD debtHUD;
+    [SerializeField] private GameOverUI gameOverUI;
+    [SerializeField] private MoneyStackManager moneyStackManager;
+
     [Header("Audio")]
     [SerializeField] private AudioSource cardAudioSource;
     [SerializeField] private AudioClip[] cardTakeSounds;
@@ -53,8 +60,11 @@ public class BlackjackGame : MonoBehaviour
     private Hand playerHand;
     private Hand dealerHand;
 
+    private int currentDebt;
     private int playerLives = 5;
-    private int dealerLives = 5;
+    private int roundsPlayed;
+    private int roundsWon;
+    private int roundsLost;
     private bool isFinishingRound;
 
     public GameState CurrentState { get; private set; }
@@ -69,11 +79,24 @@ public class BlackjackGame : MonoBehaviour
         if (cardAudioSource == null)
             cardAudioSource = gameObject.AddComponent<AudioSource>();
 
+        if (debtHUD == null)
+            debtHUD = FindAnyObjectByType<DebtHUD>();
+        if (gameOverUI == null)
+            gameOverUI = FindAnyObjectByType<GameOverUI>();
+        if (moneyStackManager == null)
+            moneyStackManager = GetComponent<MoneyStackManager>();
+
+        currentDebt = startingDebt;
+        roundsPlayed = 0;
+        roundsWon = 0;
+        roundsLost = 0;
+
         deck = new Deck();
         playerHand = new Hand();
         dealerHand = new Hand();
 
         UpdateScoreDisplay();
+        UpdateDebtDisplay();
 
         StartRound();
     }
@@ -90,6 +113,8 @@ public class BlackjackGame : MonoBehaviour
             return;
         }
 
+        roundsPlayed++;
+        UpdateDebtDisplay();
         cameraDirector?.ShowTable();
         StartCoroutine(DealInitialCards());
     }
@@ -371,43 +396,46 @@ public class BlackjackGame : MonoBehaviour
         if (playerHand.IsBust())
         {
             outcome = RoundOutcome.PlayerBust;
-            Debug.Log("RESULT: Player busts. Dealer wins the round.");
+            Debug.Log("RESULT: Player busts. Dealer takes a finger.");
             playerLives--;
+            roundsLost++;
         }
         else if (dealerHand.IsBust())
         {
             outcome = RoundOutcome.DealerBust;
-            Debug.Log("RESULT: Dealer busts. Player wins the round.");
-            dealerLives--;
+            Debug.Log("RESULT: Dealer busts. Deducting " + debtPerWin + " DH from debt.");
+            currentDebt = Mathf.Max(0, currentDebt - debtPerWin);
+            roundsWon++;
+            moneyStackManager?.DropMoneyStack(roundsWon - 1);
         }
         else if (playerScore > dealerScore)
         {
             outcome = RoundOutcome.PlayerWin;
-            Debug.Log("RESULT: Player wins! " + playerScore + " vs " + dealerScore);
-            dealerLives--;
+            Debug.Log("RESULT: Player wins! " + playerScore + " vs " + dealerScore + ". Deducting " + debtPerWin + " DH.");
+            currentDebt = Mathf.Max(0, currentDebt - debtPerWin);
+            roundsWon++;
+            moneyStackManager?.DropMoneyStack(roundsWon - 1);
         }
         else if (playerScore < dealerScore)
         {
             outcome = RoundOutcome.DealerWin;
-            Debug.Log("RESULT: Dealer wins. " + playerScore + " vs " + dealerScore);
+            Debug.Log("RESULT: Dealer wins. " + playerScore + " vs " + dealerScore + ". Dealer takes a finger.");
             playerLives--;
+            roundsLost++;
         }
         else
         {
             outcome = RoundOutcome.Push;
-            Debug.Log("RESULT: Draw. " + playerScore + " vs " + dealerScore + ". No lives lost.");
+            Debug.Log("RESULT: Draw. " + playerScore + " vs " + dealerScore + ". Debt rolls over.");
         }
 
-        Debug.Log("Lives — Player: " + playerLives + " | Dealer: " + dealerLives);
-        bool gameOver = playerLives <= 0 || dealerLives <= 0;
-        if (fingerHealth != null && fingerHealth.CurrentFingers <= 0)
-            gameOver = true;
-        CurrentState = gameOver ? GameState.GameOver : GameState.RoundResult;
+        UpdateDebtDisplay();
+        CurrentState = GameState.RoundResult;
         isFinishingRound = true;
-        StartCoroutine(FinishRoundRoutine(outcome, gameOver));
+        StartCoroutine(FinishRoundRoutine(outcome));
     }
 
-    private IEnumerator FinishRoundRoutine(RoundOutcome outcome, bool gameOver)
+    private IEnumerator FinishRoundRoutine(RoundOutcome outcome)
     {
         if (dealerDialogue != null)
         {
@@ -417,10 +445,38 @@ public class BlackjackGame : MonoBehaviour
         }
 
         if (penaltyStation != null && (outcome == RoundOutcome.DealerWin || outcome == RoundOutcome.PlayerBust))
-            yield return penaltyStation.PlayLossSequence();
-
-        if (gameOver)
         {
+            yield return penaltyStation.PlayLossSequence();
+        }
+
+        UpdateDebtDisplay();
+
+        int remainingFingers = GetCurrentFingers();
+        bool isVictory = currentDebt <= 0;
+        bool isDefeat = remainingFingers <= 0 || playerLives <= 0;
+
+        if (isVictory || isDefeat)
+        {
+            CurrentState = GameState.GameOver;
+            if (dealerDialogue != null)
+            {
+                bool dialogueDone = false;
+                yield return dealerDialogue.PlayGameOverSequence(cameraDirector, isVictory, () => dialogueDone = true);
+                yield return new WaitUntil(() => dialogueDone);
+            }
+
+            cameraDirector?.ShowTable();
+
+            if (gameOverUI != null)
+            {
+                int debtCleared = startingDebt - currentDebt;
+                gameOverUI.Show(this, isVictory, roundsPlayed, remainingFingers, debtCleared);
+            }
+            else
+            {
+                Debug.Log(isVictory ? "=== VICTORY: DEBT PAID IN FULL ===" : "=== DEFEAT: OUT OF FINGERS ===");
+            }
+
             isFinishingRound = false;
             yield break;
         }
@@ -428,6 +484,53 @@ public class BlackjackGame : MonoBehaviour
         yield return new WaitForSeconds(nextRoundDelay);
         isFinishingRound = false;
         StartRound();
+    }
+
+    public void ResetMatch()
+    {
+        StopAllCoroutines();
+        isFinishingRound = false;
+        CurrentState = GameState.RoundResult;
+
+        currentDebt = startingDebt;
+        playerLives = 5;
+        roundsPlayed = 0;
+        roundsWon = 0;
+        roundsLost = 0;
+
+        if (fingerHealth != null)
+            fingerHealth.ResetForNewGame();
+
+        if (gameOverUI != null)
+            gameOverUI.HideImmediate();
+
+        if (moneyStackManager != null)
+            moneyStackManager.ClearMoneyStacks();
+
+        deck = new Deck();
+        playerHand.ClearHand();
+        dealerHand.ClearHand();
+        ClearTable();
+
+        UpdateScoreDisplay();
+        UpdateDebtDisplay();
+
+        StartRound();
+    }
+
+    public int GetCurrentFingers()
+    {
+        if (fingerHealth != null)
+            return fingerHealth.CurrentFingers;
+        return Mathf.Clamp(playerLives, 0, 5);
+    }
+
+    public void UpdateDebtDisplay()
+    {
+        if (debtHUD != null)
+        {
+            debtHUD.UpdateDisplay(currentDebt, GetCurrentFingers(), Mathf.Max(1, roundsPlayed));
+        }
     }
 
     // =========================================================

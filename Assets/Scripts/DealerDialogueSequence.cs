@@ -29,23 +29,39 @@ public class DealerDialogueSequence : MonoBehaviour
     [Header("Result Dialogue")]
     [SerializeField] private DialogueOption[] playerWins =
     {
-        new DialogueOption { line = "Well played. Let’s see if luck stays with you." }
+        new DialogueOption { line = "That takes 1,000 DH off your tab. But you're not out yet." },
+        new DialogueOption { line = "One step closer to the door. Keep going." },
+        new DialogueOption { line = "A good hand. Your debt shrinks... for now." }
     };
     [SerializeField] private DialogueOption[] dealerWins =
     {
-        new DialogueOption { line = "The house takes this one." }
+        new DialogueOption { line = "Interest is due. Place your hand on the table." },
+        new DialogueOption { line = "You can't pay in coin? You pay in bone." },
+        new DialogueOption { line = "The loan doesn't forgive, and neither do I." }
     };
     [SerializeField] private DialogueOption[] pushes =
     {
-        new DialogueOption { line = "A tie. We go again." }
+        new DialogueOption { line = "A tie. Your debt rolls over to the next hand." },
+        new DialogueOption { line = "Nobody wins. Put the cards back." }
     };
     [SerializeField] private DialogueOption[] playerBusts =
     {
-        new DialogueOption { line = "Too risky. Better luck next round." }
+        new DialogueOption { line = "Greedy. You overplayed your hand... hand over a finger." },
+        new DialogueOption { line = "Bust. That is going to cost you dearly." }
     };
     [SerializeField] private DialogueOption[] dealerBusts =
     {
-        new DialogueOption { line = "You got me this time." }
+        new DialogueOption { line = "Tch. I overreached. Deduct 1,000 DH from your ledger." }
+    };
+
+    [Header("End Game Dialogue")]
+    [SerializeField] private DialogueOption[] victoryLines =
+    {
+        new DialogueOption { line = "Your debt is settled in full. Take your hands and get out." }
+    };
+    [SerializeField] private DialogueOption[] defeatLines =
+    {
+        new DialogueOption { line = "Five broken fingers and an empty wallet. You have nothing left." }
     };
 
     private void Awake()
@@ -149,6 +165,30 @@ public class DealerDialogueSequence : MonoBehaviour
             ? reactingAnimation
             : talkingAnimation;
         SetAnimationName(string.IsNullOrWhiteSpace(animation) ? idleAnimation : animation);
+    }
+
+    public IEnumerator PlayGameOverSequence(BlackjackCameraDirector cameraDirector, bool isVictory, Action onComplete)
+    {
+        DialogueOption option = Pick(isVictory ? victoryLines : defeatLines);
+        string line = option == null ? (isVictory ? "Your debt is settled in full." : "You have nothing left to give.") : option.line;
+
+        yield return reactiveMusic != null
+            ? reactiveMusic.TransitionToCinematic(() => cameraDirector?.ShowDealer())
+            : ShowDealerFallback(cameraDirector);
+
+        SetAnimationName(isVictory ? reactingAnimation : talkingAnimation);
+        Show(line);
+        PlayVoice(option == null ? null : option.voice);
+
+        float readableDuration = Mathf.Max(minimumReadableDuration + 1f, line.Length / Mathf.Max(1f, charactersPerSecond));
+        float voiceDuration = voiceSource != null && voiceSource.clip != null ? voiceSource.clip.length : 0f;
+        yield return new WaitForSeconds(Mathf.Max(readableDuration, voiceDuration));
+
+        if (voiceSource != null)
+            voiceSource.Stop();
+        Hide();
+        SetAnimationName(idleAnimation);
+        onComplete?.Invoke();
     }
 
     private void SetAnimationName(string animation)
