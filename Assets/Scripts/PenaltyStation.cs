@@ -11,6 +11,7 @@ public class PenaltyStation : MonoBehaviour
     [SerializeField] private Light impactLight;
     [SerializeField] private BlackjackCameraDirector cameraDirector;
     [SerializeField] private FingerHealthController fingerHealth;
+    [SerializeField] private PenaltySensoryReaction sensoryReaction;
     [SerializeField, Min(0.1f)] private float cameraHold = 0.5f;
     [SerializeField, Min(0.1f)] private float strikeClipLength = 0.7f;
     [SerializeField, Min(0.1f)] private float returnClipLength = 0.5f;
@@ -42,10 +43,13 @@ public class PenaltyStation : MonoBehaviour
         hammerAnimator.SetTrigger(strikeTrigger);
         float delay = impactDelay > 0f ? impactDelay : strikeClipLength * impactNormalizedTime;
         yield return new WaitForSecondsRealtime(delay);
+        sensoryReaction?.BeginImpactReaction();
         impactAudio?.Play();
         if (impactLight != null) yield return FlashImpact();
         fingerHealth?.LoseOneFinger();
         yield return new WaitForSecondsRealtime(Mathf.Max(0f, strikeClipLength - delay) + returnClipLength);
+        if (sensoryReaction != null)
+            yield return sensoryReaction.RecoverVision();
         cameraDirector?.ShowTable();
         sequenceRunning = false;
     }
