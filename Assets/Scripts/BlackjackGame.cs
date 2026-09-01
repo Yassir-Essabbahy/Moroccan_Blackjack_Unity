@@ -67,6 +67,10 @@ public class BlackjackGame : MonoBehaviour
     private int roundsLost;
     private bool isFinishingRound;
 
+    [Header("Intro Sequence")]
+    [SerializeField] private bool playIntroOnStart = true;
+    [SerializeField] private IntroContractSequence introSequence;
+
     public GameState CurrentState { get; private set; }
 
     private void Start()
@@ -85,6 +89,8 @@ public class BlackjackGame : MonoBehaviour
             gameOverUI = FindAnyObjectByType<GameOverUI>();
         if (moneyStackManager == null)
             moneyStackManager = GetComponent<MoneyStackManager>();
+        if (introSequence == null)
+            introSequence = FindAnyObjectByType<IntroContractSequence>();
 
         currentDebt = startingDebt;
         roundsPlayed = 0;
@@ -98,8 +104,17 @@ public class BlackjackGame : MonoBehaviour
         UpdateScoreDisplay();
         UpdateDebtDisplay();
 
-        StartRound();
+        if (playIntroOnStart && introSequence != null && !introSequence.IsComplete)
+        {
+            introSequence.StartIntro();
+        }
+        else
+        {
+            StartRound();
+        }
     }
+
+    public bool IsContractSigned => introSequence == null || introSequence.IsComplete;
 
     // =========================================================
     // ROUND
@@ -107,6 +122,12 @@ public class BlackjackGame : MonoBehaviour
 
     public void StartRound()
     {
+        if (!IsContractSigned)
+        {
+            Debug.Log("[BlackjackGame] Cannot start round: Contract is not signed yet.");
+            return;
+        }
+
         if (CurrentState == GameState.GameOver || isFinishingRound)
         {
             Debug.Log("Match is over. No more rounds.");
@@ -275,7 +296,7 @@ public class BlackjackGame : MonoBehaviour
 
     public void PlayerHit()
     {
-        if (CurrentState != GameState.PlayerTurn)
+        if (!IsContractSigned || CurrentState != GameState.PlayerTurn)
         {
             Debug.Log("Can't hit right now.");
             return;
@@ -303,7 +324,7 @@ public class BlackjackGame : MonoBehaviour
 
     public void PlayerStand()
     {
-        if (CurrentState != GameState.PlayerTurn)
+        if (!IsContractSigned || CurrentState != GameState.PlayerTurn)
         {
             Debug.Log("Can't stand right now.");
             return;
