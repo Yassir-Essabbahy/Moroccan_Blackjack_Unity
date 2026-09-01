@@ -67,9 +67,10 @@ public class BlackjackGame : MonoBehaviour
     private int roundsLost;
     private bool isFinishingRound;
 
-    [Header("Intro Sequence")]
+    [Header("Intro & Victory Sequences")]
     [SerializeField] private bool playIntroOnStart = true;
     [SerializeField] private IntroContractSequence introSequence;
+    [SerializeField] private VictorySequenceController victorySequence;
 
     [Header("UI & Discard")]
     [SerializeField] private GameObject actionPanel;
@@ -98,6 +99,8 @@ public class BlackjackGame : MonoBehaviour
             moneyStackManager = GetComponent<MoneyStackManager>();
         if (introSequence == null)
             introSequence = FindAnyObjectByType<IntroContractSequence>();
+        if (victorySequence == null)
+            victorySequence = FindAnyObjectByType<VictorySequenceController>();
 
         currentDebt = startingDebt;
         roundsPlayed = 0;
@@ -497,7 +500,17 @@ public class BlackjackGame : MonoBehaviour
                 yield return new WaitUntil(() => dialogueDone);
             }
 
-            cameraDirector?.ShowTable();
+            if (isVictory)
+            {
+                if (victorySequence != null)
+                {
+                    yield return victorySequence.PlayVictorySequence();
+                }
+            }
+            else
+            {
+                cameraDirector?.ShowTable();
+            }
 
             if (gameOverUI != null)
             {
@@ -529,6 +542,9 @@ public class BlackjackGame : MonoBehaviour
         roundsPlayed = 0;
         roundsWon = 0;
         roundsLost = 0;
+
+        if (victorySequence != null)
+            victorySequence.HideVictory();
 
         if (fingerHealth != null)
             fingerHealth.ResetForNewGame();
