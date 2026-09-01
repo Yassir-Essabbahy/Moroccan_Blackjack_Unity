@@ -56,25 +56,24 @@ public class GameOverUI : MonoBehaviour
     {
         gameInstance = game;
         isGameOverActive = true;
+        gameObject.SetActive(true);
 
         if (titleText != null)
         {
-            titleText.text = isVictory ? "DEBT SETTLED" : "DEFAULTED";
+            titleText.text = isVictory ? "DEBT CLEARED" : "BROKEN HAND";
             titleText.color = isVictory ? victoryColor : defeatColor;
         }
 
         if (subtitleText != null)
         {
             subtitleText.text = isVictory
-                ? "You paid your debt in full and walk away alive."
-                : "Five broken fingers and an empty wallet. You have nothing left.";
+                ? "The loan shark acknowledges your payment. You leave in one piece."
+                : "You lost all your fingers. The table takes everything.";
         }
 
         if (statsText != null)
         {
-            statsText.text = $"<b>Rounds Played:</b> {roundsPlayed}\n" +
-                             $"<b>Fingers Saved:</b> {fingersLeft}/5\n" +
-                             $"<b>Debt Cleared:</b> {debtCleared:N0} DH";
+            statsText.text = $"ROUNDS SURVIVED: {roundsPlayed}  |  FINGERS REMAINING: {fingersLeft}/5  |  DEBT CLEARED: {debtCleared:N0} DH";
         }
 
         StopAllCoroutines();
@@ -90,6 +89,7 @@ public class GameOverUI : MonoBehaviour
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
         }
+        gameObject.SetActive(false);
     }
 
     public void OnPlayAgainClicked()

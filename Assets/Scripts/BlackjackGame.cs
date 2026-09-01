@@ -71,6 +71,13 @@ public class BlackjackGame : MonoBehaviour
     [SerializeField] private bool playIntroOnStart = true;
     [SerializeField] private IntroContractSequence introSequence;
 
+    [Header("UI & Discard")]
+    [SerializeField] private GameObject actionPanel;
+    [SerializeField] private Transform discardPosition;
+
+    public void Hit() => PlayerHit();
+    public void Stand() => PlayerStand();
+
     public GameState CurrentState { get; private set; }
 
     private void Start()
@@ -144,8 +151,9 @@ public class BlackjackGame : MonoBehaviour
     {
         // We are dealing cards, so player can't interact yet.
         CurrentState = GameState.DealerTurn;
+        SetActionPanelVisible(false);
 
-        ClearTable();
+        yield return AnimateClearTable();
 
         playerHand.ClearHand();
         dealerHand.ClearHand();
@@ -197,6 +205,7 @@ public class BlackjackGame : MonoBehaviour
         // -----------------------------------------------------
 
         CurrentState = GameState.PlayerTurn;
+        SetActionPanelVisible(true);
         cameraDirector?.ShowTable();
 
         Debug.Log("Round started.");
@@ -317,6 +326,7 @@ public class BlackjackGame : MonoBehaviour
             Debug.Log("Player busts!");
 
             CurrentState = GameState.RoundResult;
+            SetActionPanelVisible(false);
 
             EvaluateRound();
         }
@@ -331,6 +341,7 @@ public class BlackjackGame : MonoBehaviour
         }
 
         CurrentState = GameState.DealerTurn;
+        SetActionPanelVisible(false);
 
         StartCoroutine(DealerTurnRoutine());
     }
@@ -652,19 +663,82 @@ public class BlackjackGame : MonoBehaviour
     }
 
     // =========================================================
-    // TABLE CLEANUP
+    // UI & TABLE CLEANUP
     // =========================================================
 
-    private void ClearTable()
+    public void SetActionPanelVisible(bool visible)
+    {
+        if (actionPanel == null)
+        {
+            var ap = GameObject.Find("Canvas/ActionPanel");
+            if (ap != null) actionPanel = ap;
+        }
+
+        if (actionPanel != null)
+        {
+            actionPanel.SetActive(visible);
+        }
+    }
+
+    public IEnumerator AnimateClearTable()
+    {
+        SetActionPanelVisible(false);
+
+        List<CardVisual> tableCards = new List<CardVisual>();
+        GatherCardsFromSlots(playerSlots, tableCards);
+        GatherCardsFromSlots(dealerSlots, tableCards);
+
+        if (tableCards.Count > 0)
+        {
+            PlayCardTakeSound();
+            Vector3 targetPos = discardPosition != null 
+                ? discardPosition.position 
+                : (deckPosition != null ? deckPosition.position + Vector3.up * 0.05f : transform.position);
+
+            for (int i = 0; i < tableCards.Count; i++)
+            {
+                if (tableCards[i] != null)
+                {
+                    tableCards[i].DiscardAnimation(targetPos, 0.4f, i * 0.05f);
+                }
+            }
+
+            yield return new WaitForSeconds(0.4f + (tableCards.Count * 0.05f));
+        }
+
+        ClearTableInstant();
+    }
+
+    private void GatherCardsFromSlots(List<Transform> slots, List<CardVisual> list)
+    {
+        if (slots == null) return;
+        foreach (Transform slot in slots)
+        {
+            if (slot == null) continue;
+            for (int i = 0; i < slot.childCount; i++)
+            {
+                var cv = slot.GetChild(i).GetComponent<CardVisual>();
+                if (cv != null) list.Add(cv);
+            }
+        }
+    }
+
+    public void ClearTableInstant()
     {
         ClearSlots(playerSlots);
         ClearSlots(dealerSlots);
+    }
+
+    private void ClearTable()
+    {
+        ClearTableInstant();
     }
 
     private void ClearSlots(
         List<Transform> slots
     )
     {
+        if (slots == null) return;
         foreach (Transform slot in slots)
         {
             if (slot == null)

@@ -17,10 +17,12 @@ public class PenaltySensoryReaction : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float startingVisibility = 0.025f;
     [SerializeField, Range(0f, 0.2f)] private float cameraDisorientation = 0.018f;
     [SerializeField, Min(0f)] private float disorientationFrequency = 8f;
+    [SerializeField] private Color impactFlashColor = new Color(0.75f, 0.05f, 0.02f, 0.95f);
 
     private AudioLowPassFilter musicLowPass;
     private AudioSource ringingSource;
-    private Texture2D blackTexture;
+    private Texture2D fadeTexture;
+    private Color currentFadeColor = Color.black;
     private float blackoutAlpha;
     private float recovery;
     private bool recovering;
@@ -34,9 +36,9 @@ public class PenaltySensoryReaction : MonoBehaviour
             musicLowPass = gameplayMusicSource.GetComponent<AudioLowPassFilter>() ?? gameplayMusicSource.gameObject.AddComponent<AudioLowPassFilter>();
             musicLowPass.lowpassResonanceQ = 1f;
         }
-        blackTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-        blackTexture.SetPixel(0, 0, Color.black);
-        blackTexture.Apply();
+        fadeTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+        fadeTexture.SetPixel(0, 0, Color.white);
+        fadeTexture.Apply();
     }
 
     public void BeginImpactReaction()
@@ -45,6 +47,7 @@ public class PenaltySensoryReaction : MonoBehaviour
         recovering = false;
         recovery = 0f;
         blackoutAlpha = 1f;
+        currentFadeColor = impactFlashColor;
         SetAudioState(stunnedMusicVolume, muffledCutoff, true);
         StartRinging();
         StartCoroutine(HoldBlackout());
@@ -52,7 +55,16 @@ public class PenaltySensoryReaction : MonoBehaviour
 
     private IEnumerator HoldBlackout()
     {
-        yield return new WaitForSecondsRealtime(blackoutDuration);
+        float elapsed = 0f;
+        while (elapsed < blackoutDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / blackoutDuration);
+            currentFadeColor = Color.Lerp(impactFlashColor, Color.black, t);
+            blackoutAlpha = 1f;
+            yield return null;
+        }
+        currentFadeColor = Color.black;
         blackoutAlpha = 1f;
     }
 
@@ -61,16 +73,19 @@ public class PenaltySensoryReaction : MonoBehaviour
         StopAllCoroutines();
         recovering = true;
         recovery = 0f;
+        currentFadeColor = Color.black;
         blackoutAlpha = 1f;
+
         while (recovery < recoveryDuration)
         {
             recovery += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(recovery / recoveryDuration);
-            float eased = t * t * (3f - 2f * t);
+            float eased = Mathf.SmoothStep(0f, 1f, t);
             blackoutAlpha = Mathf.Lerp(1f, 0f, eased);
             SetAudioState(Mathf.Lerp(stunnedMusicVolume, 1f, eased), Mathf.Lerp(muffledCutoff, clearCutoff, eased), true);
             yield return null;
         }
+
         blackoutAlpha = 0f;
         recovering = false;
         SetAudioState(1f, clearCutoff, false);
@@ -140,9 +155,10 @@ public class PenaltySensoryReaction : MonoBehaviour
 
     private void OnGUI()
     {
-        if (blackoutAlpha <= 0f || blackTexture == null) return;
-        GUI.color = new Color(1f, 1f, 1f, blackoutAlpha);
-        GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), blackTexture);
+        if (blackoutAlpha <= 0f || fadeTexture == null) return;
+        Color drawColor = new Color(currentFadeColor.r, currentFadeColor.g, currentFadeColor.b, blackoutAlpha * currentFadeColor.a);
+        GUI.color = drawColor;
+        GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), fadeTexture);
         GUI.color = Color.white;
     }
 }

@@ -127,9 +127,7 @@ public class CardVisual : MonoBehaviour
         if (revealOnArrival)
         {
             yield return new WaitForSeconds(revealDelay);
-
             Reveal();
-
             yield return FlipRoutine();
         }
 
@@ -185,8 +183,59 @@ public class CardVisual : MonoBehaviour
         }
 
         transform.rotation = endRotation;
+        cardRenderer.material.mainTexture = frontTexture;
+    }
 
-        cardRenderer.material.mainTexture =
-            frontTexture;
+    public void DiscardAnimation(
+        Vector3 targetDiscardPos,
+        float duration = 0.4f,
+        float delay = 0f,
+        System.Action onComplete = null
+    )
+    {
+        StartCoroutine(
+            DiscardRoutine(
+                targetDiscardPos,
+                duration,
+                delay,
+                onComplete
+            )
+        );
+    }
+
+    private IEnumerator DiscardRoutine(
+        Vector3 targetDiscardPos,
+        float duration,
+        float delay,
+        System.Action onComplete
+    )
+    {
+        if (delay > 0f)
+            yield return new WaitForSeconds(delay);
+
+        Vector3 startPos = transform.position;
+        Quaternion startRot = transform.rotation;
+        Quaternion targetRot = Quaternion.Euler(0f, Random.Range(-30f, 30f), 180f);
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            float smoothT = Mathf.SmoothStep(0f, 1f, t);
+            float arc = Mathf.Sin(t * Mathf.PI) * 0.15f;
+
+            transform.position =
+                Vector3.Lerp(startPos, targetDiscardPos, smoothT) +
+                Vector3.up * arc;
+
+            transform.rotation =
+                Quaternion.Slerp(startRot, targetRot, smoothT);
+
+            yield return null;
+        }
+
+        onComplete?.Invoke();
+        Destroy(gameObject);
     }
 }
