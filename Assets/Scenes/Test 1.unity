@@ -4104,7 +4104,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoneyStackManager
   moneyPrefab: {fileID: 8566004165924570556, guid: 217b1a3466f612646bee2a829c667402, type: 3}
-  dropSound: {fileID: 0}
+  dropSound: {fileID: 8300000, guid: b842a13439e4c324ea4fea34ae901a18, type: 3}
   audioSource: {fileID: 0}
   moneyPoint: {fileID: 632819126}
   tableSurfaceY: 0.93041193
@@ -4114,6 +4114,8 @@ MonoBehaviour:
   stackHeightStep: 0.045
   dropHeight: 1.6
   dropDuration: 0.55
+  impactShakeIntensity: 0.035
+  impactShakeDuration: 0.16
 --- !u!1 &983526583
 GameObject:
   m_ObjectHideFlags: 0

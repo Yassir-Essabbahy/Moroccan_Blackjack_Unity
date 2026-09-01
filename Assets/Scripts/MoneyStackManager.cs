@@ -21,6 +21,10 @@ public class MoneyStackManager : MonoBehaviour
     [SerializeField] private float dropHeight = 1.6f;
     [SerializeField] private float dropDuration = 0.55f;
 
+    [Header("Impact & Shake")]
+    [SerializeField] private float impactShakeIntensity = 0.035f;
+    [SerializeField] private float impactShakeDuration = 0.16f;
+
     private readonly List<GameObject> spawnedStacks = new List<GameObject>();
 
     private void Awake()
@@ -107,15 +111,44 @@ public class MoneyStackManager : MonoBehaviour
         {
             stackObj.transform.position = targetPos;
             PlayDropSound();
+            StartCoroutine(TriggerImpactMicroShake());
         }
+    }
+
+    private IEnumerator TriggerImpactMicroShake()
+    {
+        Transform cam = null;
+        var tableCam = GameObject.Find("Cameras/CM_TableOverview");
+        if (tableCam != null) cam = tableCam.transform;
+        if (cam == null && Camera.main != null) cam = Camera.main.transform;
+        if (cam == null) yield break;
+
+        Vector3 originalPos = cam.localPosition;
+        float elapsed = 0f;
+
+        while (elapsed < impactShakeDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / impactShakeDuration);
+            float strength = impactShakeIntensity * (1f - t);
+
+            float offsetX = Random.Range(-1f, 1f) * strength * 0.5f;
+            float offsetY = -Mathf.Abs(Random.Range(0.2f, 1f)) * strength;
+            float offsetZ = Random.Range(-1f, 1f) * strength * 0.3f;
+
+            cam.localPosition = originalPos + new Vector3(offsetX, offsetY, offsetZ);
+            yield return null;
+        }
+
+        cam.localPosition = originalPos;
     }
 
     private void PlayDropSound()
     {
         if (dropSound != null && audioSource != null)
         {
-            audioSource.pitch = Random.Range(0.95f, 1.05f);
-            audioSource.PlayOneShot(dropSound);
+            audioSource.pitch = Random.Range(0.82f, 0.95f);
+            audioSource.PlayOneShot(dropSound, 0.9f);
         }
     }
 
