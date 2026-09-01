@@ -4,29 +4,35 @@ public class InputTester : MonoBehaviour
 {
     private BlackjackGame game;
 
-    void Start()
+    private void Start()
     {
         game = GetComponent<BlackjackGame>();
     }
 
-void Update()
-{
-    if (game == null || !game.IsContractSigned) return;
+    private void Update()
+    {
+        if (game == null || !game.IsContractSigned) return;
 
-    if (Input.GetKeyDown(KeyCode.H)) game.PlayerHit();
-    if (Input.GetKeyDown(KeyCode.S)) game.PlayerStand();
-    if (Input.GetKeyDown(KeyCode.N)) game.StartRound(); // N = next round
-}
+        if (Input.GetKeyDown(KeyCode.H)) game.PlayerHit();
+        if (Input.GetKeyDown(KeyCode.S)) game.PlayerStand();
+        if (Input.GetKeyDown(KeyCode.N)) game.StartRound();
 
-public void Hit()
-{
-    if (game == null || !game.IsContractSigned) return;
-    game.PlayerHit();
-}
+        // Debug Testing Hotkeys
+        if (Input.GetKeyDown(KeyCode.W)) game.DebugForceWin();
+        if (Input.GetKeyDown(KeyCode.L)) game.DebugForceLoss();
+        if (Input.GetKeyDown(KeyCode.V)) game.DebugInstantVictory();
+        if (Input.GetKeyDown(KeyCode.K)) game.DebugInstantDefeat();
+    }
 
-public void Stand()
-{
-    if (game == null || !game.IsContractSigned) return;
-    game.PlayerStand();
-}
+    public void Hit()
+    {
+        if (game == null || !game.IsContractSigned) return;
+        game.PlayerHit();
+    }
+
+    public void Stand()
+    {
+        if (game == null || !game.IsContractSigned) return;
+        game.PlayerStand();
+    }
 }

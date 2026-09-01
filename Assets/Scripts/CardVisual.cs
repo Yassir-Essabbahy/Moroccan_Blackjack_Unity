@@ -1,5 +1,6 @@
-using UnityEngine;
+using System;
 using System.Collections;
+using UnityEngine;
 
 public class CardVisual : MonoBehaviour
 {
@@ -13,57 +14,47 @@ public class CardVisual : MonoBehaviour
     [SerializeField] private float dealDuration = 0.35f;
     [SerializeField] private float dealArcHeight = 0.2f;
 
-    private Card cardData;
+    private Material cardMaterial;
     private bool isFaceDown;
-
     private Texture frontTexture;
 
     public bool DealFinished { get; private set; } = true;
 
+    private void Awake()
+    {
+        if (cardRenderer != null)
+            cardMaterial = cardRenderer.material;
+    }
+
     public void SetCard(Card card, bool faceDown = false)
     {
-        cardData = card;
         isFaceDown = faceDown;
-
         frontTexture = LoadCardTexture(card);
 
         if (frontTexture == null)
         {
-            Debug.LogError(
-                "Could not find card artwork for: " +
-                card.Suit + "_" +
-                card.Rank
-            );
-
+            Debug.LogError($"Could not find card artwork for: {card.Suit}_{card.Rank}");
             return;
         }
 
+        if (cardMaterial == null && cardRenderer != null)
+            cardMaterial = cardRenderer.material;
+
         if (faceDown)
         {
-            cardRenderer.material.mainTexture = backTexture;
-
-            transform.Rotate(
-                0f,
-                0f,
-                180f
-            );
+            if (cardMaterial != null) cardMaterial.mainTexture = backTexture;
+            transform.Rotate(0f, 0f, 180f);
         }
         else
         {
-            cardRenderer.material.mainTexture = frontTexture;
+            if (cardMaterial != null) cardMaterial.mainTexture = frontTexture;
         }
     }
 
     private Texture LoadCardTexture(Card card)
     {
-        string fileName =
-            card.Suit.ToString() +
-            "_" +
-            card.Rank.ToString();
-
-        return Resources.Load<Texture>(
-            "CardArt/" + fileName
-        );
+        string fileName = $"{card.Suit}_{card.Rank}";
+        return Resources.Load<Texture>($"CardArt/{fileName}");
     }
 
     public void Reveal()
@@ -72,32 +63,16 @@ public class CardVisual : MonoBehaviour
             return;
 
         isFaceDown = false;
-
-        StartCoroutine(FlipAnimation());
+        StartCoroutine(FlipRoutine());
     }
 
-    public void DealTo(
-        Transform targetSlot,
-        bool revealOnArrival,
-        float revealDelay
-    )
+    public void DealTo(Transform targetSlot, bool revealOnArrival, float revealDelay)
     {
         DealFinished = false;
-
-        StartCoroutine(
-            DealRoutine(
-                targetSlot,
-                revealOnArrival,
-                revealDelay
-            )
-        );
+        StartCoroutine(DealRoutine(targetSlot, revealOnArrival, revealDelay));
     }
 
-    private IEnumerator DealRoutine(
-        Transform targetSlot,
-        bool revealOnArrival,
-        float revealDelay
-    )
+    private IEnumerator DealRoutine(Transform targetSlot, bool revealOnArrival, float revealDelay)
     {
         Vector3 startPosition = transform.position;
         Vector3 endPosition = targetSlot.position;
@@ -106,18 +81,11 @@ public class CardVisual : MonoBehaviour
         while (elapsed < dealDuration)
         {
             elapsed += Time.deltaTime;
-
             float t = Mathf.Clamp01(elapsed / dealDuration);
             float smoothT = Mathf.SmoothStep(0f, 1f, t);
             float arc = Mathf.Sin(t * Mathf.PI) * dealArcHeight;
 
-            transform.position =
-                Vector3.Lerp(
-                    startPosition,
-                    endPosition,
-                    smoothT
-                ) + Vector3.up * arc;
-
+            transform.position = Vector3.Lerp(startPosition, endPosition, smoothT) + Vector3.up * arc;
             yield return null;
         }
 
@@ -134,48 +102,26 @@ public class CardVisual : MonoBehaviour
         DealFinished = true;
     }
 
-    private IEnumerator FlipAnimation()
-    {
-        yield return FlipRoutine();
-    }
-
     private IEnumerator FlipRoutine()
     {
         float duration = 0.4f;
         float elapsed = 0f;
 
-        Quaternion startRotation =
-            transform.rotation;
-
-        Quaternion endRotation =
-            startRotation *
-            Quaternion.Euler(
-                0f,
-                0f,
-                180f
-            );
-
+        Quaternion startRotation = transform.rotation;
+        Quaternion endRotation = startRotation * Quaternion.Euler(0f, 0f, 180f);
         bool textureChanged = false;
 
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-
             float t = elapsed / duration;
 
-            transform.rotation =
-                Quaternion.Slerp(
-                    startRotation,
-                    endRotation,
-                    t
-                );
+            transform.rotation = Quaternion.Slerp(startRotation, endRotation, t);
 
-            // Change artwork halfway through flip.
+            // Change artwork halfway through flip
             if (!textureChanged && t >= 0.5f)
             {
-                cardRenderer.material.mainTexture =
-                    frontTexture;
-
+                if (cardMaterial != null) cardMaterial.mainTexture = frontTexture;
                 textureChanged = true;
             }
 
@@ -183,39 +129,22 @@ public class CardVisual : MonoBehaviour
         }
 
         transform.rotation = endRotation;
-        cardRenderer.material.mainTexture = frontTexture;
+        if (cardMaterial != null) cardMaterial.mainTexture = frontTexture;
     }
 
-    public void DiscardAnimation(
-        Vector3 targetDiscardPos,
-        float duration = 0.4f,
-        float delay = 0f,
-        System.Action onComplete = null
-    )
+    public void DiscardAnimation(Vector3 targetDiscardPos, float duration = 0.4f, float delay = 0f, Action onComplete = null)
     {
-        StartCoroutine(
-            DiscardRoutine(
-                targetDiscardPos,
-                duration,
-                delay,
-                onComplete
-            )
-        );
+        StartCoroutine(DiscardRoutine(targetDiscardPos, duration, delay, onComplete));
     }
 
-    private IEnumerator DiscardRoutine(
-        Vector3 targetDiscardPos,
-        float duration,
-        float delay,
-        System.Action onComplete
-    )
+    private IEnumerator DiscardRoutine(Vector3 targetDiscardPos, float duration, float delay, Action onComplete)
     {
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
 
         Vector3 startPos = transform.position;
         Quaternion startRot = transform.rotation;
-        Quaternion targetRot = Quaternion.Euler(0f, Random.Range(-30f, 30f), 180f);
+        Quaternion targetRot = Quaternion.Euler(0f, UnityEngine.Random.Range(-30f, 30f), 180f);
 
         float elapsed = 0f;
         while (elapsed < duration)
@@ -225,13 +154,8 @@ public class CardVisual : MonoBehaviour
             float smoothT = Mathf.SmoothStep(0f, 1f, t);
             float arc = Mathf.Sin(t * Mathf.PI) * 0.15f;
 
-            transform.position =
-                Vector3.Lerp(startPos, targetDiscardPos, smoothT) +
-                Vector3.up * arc;
-
-            transform.rotation =
-                Quaternion.Slerp(startRot, targetRot, smoothT);
-
+            transform.position = Vector3.Lerp(startPos, targetDiscardPos, smoothT) + Vector3.up * arc;
+            transform.rotation = Quaternion.Slerp(startRot, targetRot, smoothT);
             yield return null;
         }
 

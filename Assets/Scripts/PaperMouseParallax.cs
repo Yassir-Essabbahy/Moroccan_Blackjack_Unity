@@ -22,7 +22,10 @@ public class PaperMouseParallax : MonoBehaviour
     {
         if (!isEnabled)
         {
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, initialLocalRotation, Time.deltaTime * smoothSpeed);
+            if (Quaternion.Angle(transform.localRotation, initialLocalRotation) > 0.05f)
+            {
+                transform.localRotation = Quaternion.Slerp(transform.localRotation, initialLocalRotation, Time.deltaTime * smoothSpeed);
+            }
             return;
         }
 

@@ -14,7 +14,6 @@ public class PenaltySensoryReaction : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float ringingVolume = 0.055f;
     [SerializeField, Min(100f)] private float ringingFrequency = 5200f;
     [Header("Vision")]
-    [SerializeField, Range(0f, 1f)] private float startingVisibility = 0.025f;
     [SerializeField, Range(0f, 0.2f)] private float cameraDisorientation = 0.018f;
     [SerializeField, Min(0f)] private float disorientationFrequency = 8f;
     [SerializeField] private Color impactFlashColor = new Color(0.75f, 0.05f, 0.02f, 0.95f);
@@ -26,11 +25,14 @@ public class PenaltySensoryReaction : MonoBehaviour
     private float blackoutAlpha;
     private float recovery;
     private bool recovering;
+    private Camera mainCamera;
     private Vector3 cameraPosition;
     private bool cameraPositionCached;
 
     private void Awake()
     {
+        mainCamera = Camera.main;
+
         if (gameplayMusicSource != null)
         {
             musicLowPass = gameplayMusicSource.GetComponent<AudioLowPassFilter>() ?? gameplayMusicSource.gameObject.AddComponent<AudioLowPassFilter>();
@@ -39,6 +41,15 @@ public class PenaltySensoryReaction : MonoBehaviour
         fadeTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
         fadeTexture.SetPixel(0, 0, Color.white);
         fadeTexture.Apply();
+    }
+
+    private void OnDestroy()
+    {
+        if (fadeTexture != null)
+        {
+            Destroy(fadeTexture);
+            fadeTexture = null;
+        }
     }
 
     public void BeginImpactReaction()
@@ -140,17 +151,20 @@ public class PenaltySensoryReaction : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!recovering || Camera.main == null) return;
+        if (!recovering) return;
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (mainCamera == null) return;
+
         if (!cameraPositionCached)
         {
-            cameraPosition = Camera.main.transform.localPosition;
+            cameraPosition = mainCamera.transform.localPosition;
             cameraPositionCached = true;
         }
         float t = Mathf.Clamp01(recovery / recoveryDuration);
         float strength = cameraDisorientation * (1f - t);
         float time = Time.unscaledTime * disorientationFrequency;
-        Camera.main.transform.localPosition = cameraPosition + new Vector3(Mathf.Sin(time) * strength, Mathf.Cos(time * 1.31f) * strength, 0f);
-        Camera.main.transform.localRotation = Quaternion.Euler(Mathf.Sin(time * 0.83f) * strength * 18f, Mathf.Cos(time * 1.17f) * strength * 18f, Mathf.Sin(time * 0.61f) * strength * 12f);
+        mainCamera.transform.localPosition = cameraPosition + new Vector3(Mathf.Sin(time) * strength, Mathf.Cos(time * 1.31f) * strength, 0f);
+        mainCamera.transform.localRotation = Quaternion.Euler(Mathf.Sin(time * 0.83f) * strength * 18f, Mathf.Cos(time * 1.17f) * strength * 18f, Mathf.Sin(time * 0.61f) * strength * 12f);
     }
 
     private void OnGUI()

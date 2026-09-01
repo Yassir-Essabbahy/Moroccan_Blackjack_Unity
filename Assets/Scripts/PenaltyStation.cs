@@ -25,6 +25,12 @@ public class PenaltyStation : MonoBehaviour
 
     private void Awake()
     {
+        if (penaltyCameraTransform == null)
+        {
+            var go = GameObject.Find("Cameras/CM_PenaltyStation");
+            if (go != null) penaltyCameraTransform = go.transform;
+        }
+
         if (hammerAnimator == null)
             return;
         hammerAnimator.ResetTrigger(strikeTrigger);

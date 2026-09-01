@@ -1,11 +1,10 @@
-using UnityEngine;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 
 public class Deck
 {
-    private List<Card> cards = new List<Card>();
-    
+    private readonly List<Card> cards = new List<Card>();
+
     public int RemainingCount => cards.Count;
 
     public Deck()
@@ -16,9 +15,11 @@ public class Deck
 
     private void CreateDeck()
     {
-        foreach(Suit suit in Enum.GetValues(typeof(Suit)))
+        cards.Clear();
+
+        foreach (Suit suit in Enum.GetValues(typeof(Suit)))
         {
-            foreach(Rank rank in Enum.GetValues(typeof(Rank)))
+            foreach (Rank rank in Enum.GetValues(typeof(Rank)))
             {
                 cards.Add(new Card(suit, rank));
             }
@@ -29,7 +30,7 @@ public class Deck
     {
         for (int i = cards.Count - 1; i > 0; i--)
         {
-           int randomIndex = UnityEngine.Random.Range(0, i + 1);
+            int randomIndex = UnityEngine.Random.Range(0, i + 1);
 
             Card temp = cards[i];
             cards[i] = cards[randomIndex];
@@ -41,13 +42,13 @@ public class Deck
     {
         if (cards.Count == 0)
         {
-            
             CreateDeck();
             Shuffle();
         }
 
-        Card drawCard = cards[0];
-        cards.RemoveAt(0);
+        int lastIndex = cards.Count - 1;
+        Card drawCard = cards[lastIndex];
+        cards.RemoveAt(lastIndex);
         return drawCard;
     }
 

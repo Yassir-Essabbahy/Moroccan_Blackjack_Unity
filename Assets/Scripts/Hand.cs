@@ -1,11 +1,8 @@
-using UnityEngine;
-
 using System.Collections.Generic;
 
 public class Hand
 {
-    
-    private List<Card> cards = new List<Card>();
+    private readonly List<Card> cards = new List<Card>();
 
     public IReadOnlyList<Card> Cards => cards;
 
@@ -53,22 +50,17 @@ public class Hand
         return GetScore() == 21;
     }
 
-        public bool IsSoft17()
+    public bool IsSoft17()
     {
         if (GetScore() != 17)
             return false;
 
-        bool hasAce = false;
-
-        foreach (Card card in Cards)
+        foreach (Card card in cards)
         {
             if (card.Rank == Rank.One)
-            {
-                hasAce = true;
-                break;
-            }
+                return true;
         }
 
-        return hasAce;
+        return false;
     }
 }

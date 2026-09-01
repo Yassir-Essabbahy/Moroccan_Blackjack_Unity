@@ -10,45 +10,64 @@ public enum Suit
 
 public enum Rank
 {
-    One = 1,
-    Two = 2,
-    Three = 3,
-    Four = 4,
-    Five = 5,
-    Six = 6,
-    Seven = 7,
-    Sota = 10,
-    Caballo = 11,
-    Rey = 12
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Sota,
+    Caballo,
+    Rey
 }
 
 public class Card
 {
-    public Suit Suit { get; private set; }
-    public Rank Rank { get; private set; }
-    public int Value { get; private set; }
+    public Suit Suit { get; }
+    public Rank Rank { get; }
+
+    public int Value
+    {
+        get
+        {
+            switch (Rank)
+            {
+                case Rank.One:
+                    return 11;
+
+                case Rank.Two:
+                    return 2;
+
+                case Rank.Three:
+                    return 3;
+
+                case Rank.Four:
+                    return 4;
+
+                case Rank.Five:
+                    return 5;
+
+                case Rank.Six:
+                    return 6;
+
+                case Rank.Seven:
+                    return 7;
+
+                case Rank.Sota:
+                case Rank.Caballo:
+                case Rank.Rey:
+                    return 10;
+
+                default:
+                    return 0;
+            }
+        }
+    }
 
     public Card(Suit suit, Rank rank)
     {
         Suit = suit;
         Rank = rank;
-        Value = CalculateBaseValue(rank);
     }
-
-private int CalculateBaseValue(Rank rank)
-{
-    if (rank == Rank.One)
-        return 11;
-
-    if (rank == Rank.Sota || rank == Rank.Caballo || rank == Rank.Rey)
-        return 10;
-
-    return (int)rank;
 }
-public override string ToString()
-{
-    return $"{Rank} of {Suit}";
-}
-
-}
-

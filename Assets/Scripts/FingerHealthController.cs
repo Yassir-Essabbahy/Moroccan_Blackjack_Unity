@@ -4,7 +4,6 @@ using UnityEngine;
 public class FingerHealthController : MonoBehaviour
 {
     [SerializeField] private Animator playerHandAnimator;
-    [SerializeField] private Animator dealerHandAnimator;
     [SerializeField, Range(0, 5)] private int startingFingerCount = 5;
     [SerializeField] private TMP_Text uiDisplay;
     [SerializeField] private string animatorParameter = "FingersRemaining";

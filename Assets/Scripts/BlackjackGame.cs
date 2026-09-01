@@ -542,7 +542,7 @@ public class BlackjackGame : MonoBehaviour
         deck = new Deck();
         playerHand.ClearHand();
         dealerHand.ClearHand();
-        ClearTable();
+        ClearTableInstant();
 
         UpdateScoreDisplay();
         UpdateDebtDisplay();
@@ -668,12 +668,6 @@ public class BlackjackGame : MonoBehaviour
 
     public void SetActionPanelVisible(bool visible)
     {
-        if (actionPanel == null)
-        {
-            var ap = GameObject.Find("Canvas/ActionPanel");
-            if (ap != null) actionPanel = ap;
-        }
-
         if (actionPanel != null)
         {
             actionPanel.SetActive(visible);
@@ -729,14 +723,7 @@ public class BlackjackGame : MonoBehaviour
         ClearSlots(dealerSlots);
     }
 
-    private void ClearTable()
-    {
-        ClearTableInstant();
-    }
-
-    private void ClearSlots(
-        List<Transform> slots
-    )
+    private void ClearSlots(List<Transform> slots)
     {
         if (slots == null) return;
         foreach (Transform slot in slots)
@@ -744,16 +731,57 @@ public class BlackjackGame : MonoBehaviour
             if (slot == null)
                 continue;
 
-            for (
-                int i = slot.childCount - 1;
-                i >= 0;
-                i--
-            )
+            for (int i = slot.childCount - 1; i >= 0; i--)
             {
-                Destroy(
-                    slot.GetChild(i).gameObject
-                );
+                Destroy(slot.GetChild(i).gameObject);
             }
         }
+    }
+
+    // =========================================================
+    // DEBUG TEST SHORTCUTS & METHODS
+    // =========================================================
+
+    public void DebugForceWin()
+    {
+        if (CurrentState == GameState.GameOver || isFinishingRound) return;
+        StopAllCoroutines();
+        SetActionPanelVisible(false);
+        cameraDirector?.ShowTable();
+
+        currentDebt = Mathf.Max(0, currentDebt - debtPerWin);
+        roundsWon++;
+        moneyStackManager?.DropMoneyStack(roundsWon - 1);
+        UpdateDebtDisplay();
+        CurrentState = GameState.RoundResult;
+        isFinishingRound = true;
+        StartCoroutine(FinishRoundRoutine(RoundOutcome.PlayerWin));
+    }
+
+    public void DebugForceLoss()
+    {
+        if (CurrentState == GameState.GameOver || isFinishingRound) return;
+        StopAllCoroutines();
+        SetActionPanelVisible(false);
+        cameraDirector?.ShowTable();
+
+        playerLives--;
+        roundsLost++;
+        UpdateDebtDisplay();
+        CurrentState = GameState.RoundResult;
+        isFinishingRound = true;
+        StartCoroutine(FinishRoundRoutine(RoundOutcome.DealerWin));
+    }
+
+    public void DebugInstantVictory()
+    {
+        currentDebt = 0;
+        DebugForceWin();
+    }
+
+    public void DebugInstantDefeat()
+    {
+        playerLives = 1;
+        DebugForceLoss();
     }
 }

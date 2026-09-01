@@ -35,13 +35,13 @@ public class ChalkButtonFX : MonoBehaviour
 
     private IEnumerator FontGlitchLoop()
     {
+        if (fonts == null || fonts.Length <= 1 || label == null)
+            yield break;
+
         while (true)
         {
             float wait = Random.Range(minInterval, maxInterval);
             yield return new WaitForSeconds(wait);
-
-            if (fonts == null || fonts.Length <= 1 || label == null)
-                continue;
 
             int nextFont;
 

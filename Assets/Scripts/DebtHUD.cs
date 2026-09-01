@@ -14,26 +14,34 @@ public class DebtHUD : MonoBehaviour
     [SerializeField] private Color clearedDebtColor = new Color(0.3f, 0.9f, 0.4f, 1f);
     [SerializeField] private Color criticalFingersColor = new Color(0.9f, 0.2f, 0.2f, 1f);
 
+    private string normalDebtHex;
+    private string clearedDebtHex;
+    private string criticalFingersHex;
+
+    private void Awake()
+    {
+        normalDebtHex = ColorUtility.ToHtmlStringRGB(normalDebtColor);
+        clearedDebtHex = ColorUtility.ToHtmlStringRGB(clearedDebtColor);
+        criticalFingersHex = ColorUtility.ToHtmlStringRGB(criticalFingersColor);
+    }
+
     public void UpdateDisplay(int currentDebt, int currentFingers, int roundNumber)
     {
         if (debtText != null)
         {
             if (currentDebt <= 0)
             {
-                debtText.text = $"DEBT: <color=#{ColorUtility.ToHtmlStringRGB(clearedDebtColor)}>PAID IN FULL</color>";
+                debtText.text = $"DEBT: <color=#{clearedDebtHex}>PAID IN FULL</color>";
             }
             else
             {
-                debtText.text = $"DEBT: <color=#{ColorUtility.ToHtmlStringRGB(normalDebtColor)}>{currentDebt:N0} {currencySymbol}</color>";
+                debtText.text = $"DEBT: <color=#{normalDebtHex}>{currentDebt:N0} {currencySymbol}</color>";
             }
         }
 
         if (fingersText != null)
         {
-            string colorHex = currentFingers <= 1 
-                ? ColorUtility.ToHtmlStringRGB(criticalFingersColor) 
-                : ColorUtility.ToHtmlStringRGB(normalDebtColor);
-
+            string colorHex = currentFingers <= 1 ? criticalFingersHex : normalDebtHex;
             fingersText.text = $"FINGERS: <color=#{colorHex}>{currentFingers}/5</color>";
         }
 
