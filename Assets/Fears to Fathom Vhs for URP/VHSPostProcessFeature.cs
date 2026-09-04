@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -47,19 +47,14 @@ public class VHSRendererFeature : ScriptableRendererFeature
 
             if (s_CopyMaterial == null)
             {
-                Shader blitShader = Shader.Find("Hidden/Universal Render Pipeline/Blit");
-                if (blitShader == null)
+                s_CopyMaterial = Blitter.GetBlitMaterial(TextureDimension.Tex2D);
+                if (s_CopyMaterial == null)
                 {
-                    blitShader = Shader.Find("Hidden/BlitCopy");
-                }
-                if (blitShader != null)
-                {
-                    s_CopyMaterial = new Material(blitShader);
-                    s_CopyMaterial.hideFlags = HideFlags.HideAndDontSave;
-                }
-                else
-                {
-                    Debug.LogError("VHSRendererFeature: Could not find a valid blit shader for copying.");
+                    Shader blitShader = Shader.Find("Hidden/Universal Render Pipeline/Blit") ?? Shader.Find("Hidden/BlitCopy");
+                    if (blitShader != null)
+                    {
+                        s_CopyMaterial = new Material(blitShader) { hideFlags = HideFlags.HideAndDontSave };
+                    }
                 }
             }
         }
@@ -67,8 +62,14 @@ public class VHSRendererFeature : ScriptableRendererFeature
 #if UNITY_6000_0_OR_NEWER
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            if (m_Material == null)
+                return;
+
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             TextureHandle cameraColor = resourceData.activeColorTexture;
+
+            if (!cameraColor.IsValid())
+                return;
 
             TextureDesc descriptor = cameraColor.GetDescriptor(renderGraph);
             descriptor.depthBufferBits = 0;
@@ -78,6 +79,11 @@ public class VHSRendererFeature : ScriptableRendererFeature
 
             TextureHandle tempTex = renderGraph.CreateTexture(descriptor);
 
+            if (s_CopyMaterial == null)
+            {
+                s_CopyMaterial = Blitter.GetBlitMaterial(TextureDimension.Tex2D);
+            }
+
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("VHS Copy", out var passData))
             {
                 passData.source = cameraColor;
@@ -86,20 +92,38 @@ public class VHSRendererFeature : ScriptableRendererFeature
                 builder.SetRenderAttachment(tempTex, 0, AccessFlags.Write);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext ctx) =>
                 {
-                    Blitter.BlitTexture(ctx.cmd, data.source, Vector2.one, data.copyMaterial, 0);
+                    if (data.copyMaterial != null)
+                    {
+                        Blitter.BlitTexture(ctx.cmd, data.source, Vector2.one, data.copyMaterial, 0);
+                    }
+                    else
+                    {
+                        Blitter.BlitTexture(ctx.cmd, data.source, new Vector4(1f, 1f, 0f, 0f), 0f, false);
+                    }
                 });
             }
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("VHS Effect", out var passData))
             {
                 passData.source = tempTex;
-                passData.copyMaterial = null;
+                passData.copyMaterial = s_CopyMaterial;
                 passData.material = m_Material;
                 builder.UseTexture(tempTex, AccessFlags.Read);
                 builder.SetRenderAttachment(cameraColor, 0, AccessFlags.Write);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext ctx) =>
                 {
-                    Blitter.BlitTexture(ctx.cmd, data.source, Vector2.one, data.material, 0);
+                    if (data.material != null)
+                    {
+                        Blitter.BlitTexture(ctx.cmd, data.source, Vector2.one, data.material, 0);
+                    }
+                    else if (data.copyMaterial != null)
+                    {
+                        Blitter.BlitTexture(ctx.cmd, data.source, Vector2.one, data.copyMaterial, 0);
+                    }
+                    else
+                    {
+                        Blitter.BlitTexture(ctx.cmd, data.source, new Vector4(1f, 1f, 0f, 0f), 0f, false);
+                    }
                 });
             }
         }
