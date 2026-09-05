@@ -56,6 +56,9 @@ public class BlackjackGame : MonoBehaviour
     [SerializeField] private float revealDelay = 0.25f;
     [SerializeField] private float viewSwitchDelay = 0.4f;
 
+    [Header("Rules")]
+    [SerializeField] private bool dynamicAce = true;
+
     private Deck deck;
     private Hand playerHand;
     private Hand dealerHand;
@@ -66,6 +69,7 @@ public class BlackjackGame : MonoBehaviour
     private int roundsWon;
     private int roundsLost;
     private bool isFinishingRound;
+    private bool isDealingCard;
 
     [Header("Intro & Victory Sequences")]
     [SerializeField] private bool playIntroOnStart = true;
@@ -94,7 +98,7 @@ public class BlackjackGame : MonoBehaviour
         if (debtHUD == null)
             debtHUD = FindAnyObjectByType<DebtHUD>();
         if (gameOverUI == null)
-            gameOverUI = FindAnyObjectByType<GameOverUI>();
+            gameOverUI = FindAnyObjectByType<GameOverUI>(FindObjectsInactive.Include);
         if (moneyStackManager == null)
             moneyStackManager = GetComponent<MoneyStackManager>();
         if (introSequence == null)
@@ -108,8 +112,8 @@ public class BlackjackGame : MonoBehaviour
         roundsLost = 0;
 
         deck = new Deck();
-        playerHand = new Hand();
-        dealerHand = new Hand();
+        playerHand = new Hand(dynamicAce);
+        dealerHand = new Hand(dynamicAce);
 
         UpdateScoreDisplay();
         UpdateDebtDisplay();
@@ -153,6 +157,7 @@ public class BlackjackGame : MonoBehaviour
     private IEnumerator DealInitialCards()
     {
         // We are dealing cards, so player can't interact yet.
+        isDealingCard = false;
         CurrentState = GameState.DealerTurn;
         SetActionPanelVisible(false);
 
@@ -208,6 +213,7 @@ public class BlackjackGame : MonoBehaviour
         // -----------------------------------------------------
 
         CurrentState = GameState.PlayerTurn;
+        isDealingCard = false;
         SetActionPanelVisible(true);
         cameraDirector?.ShowTable();
 
@@ -308,36 +314,66 @@ public class BlackjackGame : MonoBehaviour
 
     public void PlayerHit()
     {
-        if (!IsContractSigned || CurrentState != GameState.PlayerTurn)
+        if (!IsContractSigned || CurrentState != GameState.PlayerTurn || isDealingCard)
         {
             Debug.Log("Can't hit right now.");
             return;
         }
 
-        DealCardToPlayer(false);
+        StartCoroutine(PlayerHitRoutine());
+    }
+
+    private IEnumerator PlayerHitRoutine()
+    {
+        isDealingCard = true;
+        SetActionPanelVisible(false);
+
+        CardVisual playerCard = DealCardToPlayer(false);
+        if (playerCard != null)
+            yield return WaitUntilCardDone(playerCard);
 
         UpdateScoreDisplay();
+        int score = playerHand.GetScore();
 
-        Debug.Log(
-            "Player hit. Score: " +
-            playerHand.GetScore()
-        );
+        Debug.Log("Player hit. Score: " + score);
 
         // Player busts immediately.
         if (playerHand.IsBust())
         {
             Debug.Log("Player busts!");
-
+            isDealingCard = false;
             CurrentState = GameState.RoundResult;
-            SetActionPanelVisible(false);
-
             EvaluateRound();
+            yield break;
         }
+
+        // Auto-stand on 21 (prevents accidental extra hits causing ace downgrades or busts)
+        if (score == 21)
+        {
+            Debug.Log("Player hit 21! Auto-standing.");
+            isDealingCard = false;
+            CurrentState = GameState.DealerTurn;
+            StartCoroutine(DealerTurnRoutine());
+            yield break;
+        }
+
+        // If player has filled all available slots, auto-stand
+        if (playerSlots != null && playerHand.Cards.Count >= playerSlots.Count)
+        {
+            Debug.Log("Player reached max card slots. Auto-standing.");
+            isDealingCard = false;
+            CurrentState = GameState.DealerTurn;
+            StartCoroutine(DealerTurnRoutine());
+            yield break;
+        }
+
+        isDealingCard = false;
+        SetActionPanelVisible(true);
     }
 
     public void PlayerStand()
     {
-        if (!IsContractSigned || CurrentState != GameState.PlayerTurn)
+        if (!IsContractSigned || CurrentState != GameState.PlayerTurn || isDealingCard)
         {
             Debug.Log("Can't stand right now.");
             return;
@@ -535,6 +571,7 @@ public class BlackjackGame : MonoBehaviour
     {
         StopAllCoroutines();
         isFinishingRound = false;
+        isDealingCard = false;
         CurrentState = GameState.RoundResult;
 
         currentDebt = startingDebt;
@@ -556,8 +593,8 @@ public class BlackjackGame : MonoBehaviour
             moneyStackManager.ClearMoneyStacks();
 
         deck = new Deck();
-        playerHand.ClearHand();
-        dealerHand.ClearHand();
+        playerHand = new Hand(dynamicAce);
+        dealerHand = new Hand(dynamicAce);
         ClearTableInstant();
 
         UpdateScoreDisplay();

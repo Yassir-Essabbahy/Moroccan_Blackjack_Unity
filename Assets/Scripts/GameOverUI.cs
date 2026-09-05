@@ -28,7 +28,12 @@ public class GameOverUI : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
 
-        HideImmediate();
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
 
         if (playAgainButton != null)
             playAgainButton.onClick.AddListener(OnPlayAgainClicked);
@@ -57,6 +62,11 @@ public class GameOverUI : MonoBehaviour
         gameInstance = game;
         isGameOverActive = true;
         gameObject.SetActive(true);
+
+        if (canvasGroup == null)
+            canvasGroup = GetComponent<CanvasGroup>();
+
+        transform.SetAsLastSibling();
 
         if (titleText != null)
         {
