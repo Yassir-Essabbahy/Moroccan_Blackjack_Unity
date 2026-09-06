@@ -50,6 +50,7 @@ public class PenaltySensoryReaction : MonoBehaviour
             Destroy(fadeTexture);
             fadeTexture = null;
         }
+        StopRinging();
     }
 
     public void BeginImpactReaction()
@@ -147,16 +148,6 @@ public class PenaltySensoryReaction : MonoBehaviour
         ringingSource.Stop();
         Destroy(ringingSource);
         ringingSource = null;
-    }
-
-    private void OnDestroy()
-    {
-        if (fadeTexture != null)
-        {
-            Destroy(fadeTexture);
-            fadeTexture = null;
-        }
-        StopRinging();
     }
 
     private void LateUpdate()
