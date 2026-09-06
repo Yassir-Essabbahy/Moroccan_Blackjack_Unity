@@ -1417,8 +1417,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.35}
   m_AnchorMax: {x: 0.68, y: 0.95}
-  m_AnchoredPosition: {x: 58.6, y: 0}
-  m_SizeDelta: {x: -164.04, y: -39.22}
+  m_AnchoredPosition: {x: 58.6, y: 301.4}
+  m_SizeDelta: {x: -164.04, y: -48.12}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &206461379
 MonoBehaviour:
@@ -4324,6 +4324,7 @@ MonoBehaviour:
   timeBetweenCards: 0.4
   revealDelay: 0.25
   viewSwitchDelay: 0.4
+  dynamicAce: 1
   playIntroOnStart: 1
   introSequence: {fileID: 1652635471}
   victorySequence: {fileID: 487749400}
@@ -4414,10 +4415,10 @@ MonoBehaviour:
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   victoryLines:
   - line: Your debt is settled in full. Take your hands and get out.
-    voice: {fileID: 0}
+    voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   defeatLines:
   - line: Five broken fingers and an empty wallet. You have nothing left.
-    voice: {fileID: 0}
+    voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
 --- !u!82 &963819451
 AudioSource:
   m_ObjectHideFlags: 0
@@ -4528,7 +4529,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoneyStackManager
   moneyPrefab: {fileID: 8566004165924570556, guid: 217b1a3466f612646bee2a829c667402, type: 3}
-  dropSound: {fileID: 8300000, guid: b842a13439e4c324ea4fea34ae901a18, type: 3}
+  dropSound: {fileID: 8300000, guid: 89575f8f38869e54caf33d71f25f5f44, type: 3}
   audioSource: {fileID: 0}
   moneyPoint: {fileID: 632819126}
   tableSurfaceY: 0.93041193

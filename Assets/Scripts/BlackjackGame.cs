@@ -508,6 +508,40 @@ public class BlackjackGame : MonoBehaviour
 
     private IEnumerator FinishRoundRoutine(RoundOutcome outcome)
     {
+        UpdateDebtDisplay();
+
+        int remainingFingers = GetCurrentFingers();
+        bool isVictory = currentDebt <= 0;
+
+        if (isVictory)
+        {
+            CurrentState = GameState.GameOver;
+            if (dealerDialogue != null)
+            {
+                bool dialogueDone = false;
+                yield return dealerDialogue.PlayGameOverSequence(cameraDirector, true, () => dialogueDone = true);
+                yield return new WaitUntil(() => dialogueDone);
+            }
+
+            if (victorySequence != null)
+            {
+                yield return victorySequence.PlayVictorySequence();
+            }
+
+            if (gameOverUI != null)
+            {
+                int debtCleared = startingDebt - currentDebt;
+                gameOverUI.Show(this, true, roundsPlayed, remainingFingers, debtCleared);
+            }
+            else
+            {
+                Debug.Log("=== VICTORY: DEBT PAID IN FULL ===");
+            }
+
+            isFinishingRound = false;
+            yield break;
+        }
+
         if (dealerDialogue != null)
         {
             bool completed = false;
@@ -522,40 +556,29 @@ public class BlackjackGame : MonoBehaviour
 
         UpdateDebtDisplay();
 
-        int remainingFingers = GetCurrentFingers();
-        bool isVictory = currentDebt <= 0;
+        remainingFingers = GetCurrentFingers();
         bool isDefeat = remainingFingers <= 0 || playerLives <= 0;
 
-        if (isVictory || isDefeat)
+        if (isDefeat)
         {
             CurrentState = GameState.GameOver;
             if (dealerDialogue != null)
             {
                 bool dialogueDone = false;
-                yield return dealerDialogue.PlayGameOverSequence(cameraDirector, isVictory, () => dialogueDone = true);
+                yield return dealerDialogue.PlayGameOverSequence(cameraDirector, false, () => dialogueDone = true);
                 yield return new WaitUntil(() => dialogueDone);
             }
 
-            if (isVictory)
-            {
-                if (victorySequence != null)
-                {
-                    yield return victorySequence.PlayVictorySequence();
-                }
-            }
-            else
-            {
-                cameraDirector?.ShowTable();
-            }
+            cameraDirector?.ShowTable();
 
             if (gameOverUI != null)
             {
                 int debtCleared = startingDebt - currentDebt;
-                gameOverUI.Show(this, isVictory, roundsPlayed, remainingFingers, debtCleared);
+                gameOverUI.Show(this, false, roundsPlayed, remainingFingers, debtCleared);
             }
             else
             {
-                Debug.Log(isVictory ? "=== VICTORY: DEBT PAID IN FULL ===" : "=== DEFEAT: OUT OF FINGERS ===");
+                Debug.Log("=== DEFEAT: OUT OF FINGERS ===");
             }
 
             isFinishingRound = false;

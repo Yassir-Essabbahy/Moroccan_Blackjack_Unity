@@ -147,8 +147,8 @@ public class MoneyStackManager : MonoBehaviour
     {
         if (dropSound != null && audioSource != null)
         {
-            audioSource.pitch = Random.Range(0.82f, 0.95f);
-            audioSource.PlayOneShot(dropSound, 0.9f);
+            audioSource.pitch = Random.Range(0.95f, 1.05f);
+            audioSource.PlayOneShot(dropSound, 1f);
         }
     }
 

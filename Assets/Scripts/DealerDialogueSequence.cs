@@ -153,10 +153,36 @@ public class DealerDialogueSequence : MonoBehaviour
 
     private void PlayVoice(AudioClip clip)
     {
-        if (voiceSource == null || clip == null)
+        if (voiceSource == null)
             return;
-        voiceSource.clip = clip;
+
+        AudioClip clipToPlay = clip != null ? clip : GetFallbackVoice();
+        if (clipToPlay == null)
+            return;
+
+        voiceSource.clip = clipToPlay;
         voiceSource.Play();
+    }
+
+    private AudioClip GetFallbackVoice()
+    {
+        if (playerWins != null)
+        {
+            foreach (var opt in playerWins)
+            {
+                if (opt != null && opt.voice != null)
+                    return opt.voice;
+            }
+        }
+        if (dealerWins != null)
+        {
+            foreach (var opt in dealerWins)
+            {
+                if (opt != null && opt.voice != null)
+                    return opt.voice;
+            }
+        }
+        return null;
     }
 
     private void SetAnimation(RoundOutcome outcome)
