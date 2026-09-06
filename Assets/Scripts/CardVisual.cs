@@ -75,12 +75,13 @@ public class CardVisual : MonoBehaviour
         return loaded;
     }
 
+    private bool isFlipping;
+
     public void Reveal()
     {
-        if (!isFaceDown)
+        if (!isFaceDown || isFlipping)
             return;
 
-        isFaceDown = false;
         StartCoroutine(FlipRoutine());
     }
 
@@ -113,7 +114,6 @@ public class CardVisual : MonoBehaviour
         if (revealOnArrival)
         {
             yield return new WaitForSeconds(revealDelay);
-            Reveal();
             yield return FlipRoutine();
         }
 
@@ -122,6 +122,12 @@ public class CardVisual : MonoBehaviour
 
     private IEnumerator FlipRoutine()
     {
+        if (!isFaceDown || isFlipping)
+            yield break;
+
+        isFlipping = true;
+        isFaceDown = false;
+
         float duration = 0.4f;
         float elapsed = 0f;
 
@@ -132,7 +138,7 @@ public class CardVisual : MonoBehaviour
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
+            float t = Mathf.Clamp01(elapsed / duration);
 
             transform.rotation = Quaternion.Slerp(startRotation, endRotation, t);
 
@@ -147,7 +153,11 @@ public class CardVisual : MonoBehaviour
         }
 
         transform.rotation = endRotation;
+        Vector3 euler = transform.eulerAngles;
+        transform.rotation = Quaternion.Euler(0f, Mathf.Round(euler.y / 90f) * 90f, 0f);
+
         if (cardMaterial != null) cardMaterial.mainTexture = frontTexture;
+        isFlipping = false;
     }
 
     public void DiscardAnimation(Vector3 targetDiscardPos, float duration = 0.4f, float delay = 0f, Action onComplete = null)
