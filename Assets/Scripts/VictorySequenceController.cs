@@ -36,6 +36,27 @@ public class VictorySequenceController : MonoBehaviour
             victorySpotlight.enabled = false;
     }
 
+    private void Update()
+    {
+        if (!IsVictoryActive)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            var game = FindAnyObjectByType<BlackjackGame>();
+            if (game != null)
+                game.ResetMatch();
+        }
+        else if (Input.GetKeyDown(KeyCode.Escape))
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
+        }
+    }
+
     public IEnumerator PlayVictorySequence(Action onComplete = null)
     {
         IsVictoryActive = true;

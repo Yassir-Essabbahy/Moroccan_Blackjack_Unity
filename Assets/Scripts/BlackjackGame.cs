@@ -528,15 +528,7 @@ public class BlackjackGame : MonoBehaviour
                 yield return victorySequence.PlayVictorySequence();
             }
 
-            if (gameOverUI != null)
-            {
-                int debtCleared = startingDebt - currentDebt;
-                gameOverUI.Show(this, true, roundsPlayed, remainingFingers, debtCleared);
-            }
-            else
-            {
-                Debug.Log("=== VICTORY: DEBT PAID IN FULL ===");
-            }
+            Debug.Log("=== VICTORY: DEBT PAID IN FULL ===");
 
             isFinishingRound = false;
             yield break;

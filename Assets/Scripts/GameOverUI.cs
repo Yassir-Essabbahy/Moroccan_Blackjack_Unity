@@ -59,6 +59,10 @@ public class GameOverUI : MonoBehaviour
 
     public void Show(BlackjackGame game, bool isVictory, int roundsPlayed, int fingersLeft, int debtCleared)
     {
+        // Only defeat panel is shown; win panel is removed per design
+        if (isVictory)
+            return;
+
         gameInstance = game;
         isGameOverActive = true;
         gameObject.SetActive(true);
@@ -70,15 +74,13 @@ public class GameOverUI : MonoBehaviour
 
         if (titleText != null)
         {
-            titleText.text = isVictory ? "DEBT CLEARED" : "BROKEN HAND";
-            titleText.color = isVictory ? victoryColor : defeatColor;
+            titleText.text = "BROKEN HAND";
+            titleText.color = defeatColor;
         }
 
         if (subtitleText != null)
         {
-            subtitleText.text = isVictory
-                ? "The loan shark acknowledges your payment. You leave in one piece."
-                : "You lost all your fingers. The table takes everything.";
+            subtitleText.text = "You lost all your fingers. The table takes everything.";
         }
 
         if (statsText != null)
@@ -88,6 +90,11 @@ public class GameOverUI : MonoBehaviour
 
         StopAllCoroutines();
         StartCoroutine(FadeRoutine(1f));
+    }
+
+    public void ShowDefeat(BlackjackGame game, int roundsPlayed, int fingersLeft, int debtCleared)
+    {
+        Show(game, false, roundsPlayed, fingersLeft, debtCleared);
     }
 
     public void HideImmediate()
