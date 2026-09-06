@@ -68,8 +68,8 @@ half4 frag(Varyings input) : SV_Target
 
                 // ----- Fisheye -----
     float2 centered = uv - 0.5;
-    float len = length(centered);
-    uv = 0.5 + centered * (1.0 + _FisheyeBend * len * len);
+    float r2 = dot(centered, centered);
+    uv = 0.5 + centered * (1.0 + _FisheyeBend * r2);
 
                 // Handle out-of-bounds UVs
     if (_BlackBorders > 0.5)
