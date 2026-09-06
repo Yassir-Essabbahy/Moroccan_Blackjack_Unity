@@ -55,7 +55,7 @@ public class CardVisual : MonoBehaviour
         if (faceDown)
         {
             if (cardMaterial != null) cardMaterial.mainTexture = backTexture;
-            transform.Rotate(0f, 0f, 180f);
+            transform.rotation = transform.rotation * Quaternion.Euler(0f, 0f, 180f);
         }
         else
         {
@@ -93,8 +93,18 @@ public class CardVisual : MonoBehaviour
 
     private IEnumerator DealRoutine(Transform targetSlot, bool revealOnArrival, float revealDelay)
     {
+        if (targetSlot == null)
+        {
+            DealFinished = true;
+            yield break;
+        }
+
         Vector3 startPosition = transform.position;
+        Quaternion startRotation = transform.rotation;
+
         Vector3 endPosition = targetSlot.position;
+        Quaternion endRotation = targetSlot.rotation * Quaternion.Euler(0f, 0f, 180f);
+
         float elapsed = 0f;
 
         while (elapsed < dealDuration)
@@ -105,11 +115,14 @@ public class CardVisual : MonoBehaviour
             float arc = Mathf.Sin(t * Mathf.PI) * dealArcHeight;
 
             transform.position = Vector3.Lerp(startPosition, endPosition, smoothT) + Vector3.up * arc;
+            transform.rotation = Quaternion.Slerp(startRotation, endRotation, smoothT);
             yield return null;
         }
 
         transform.position = endPosition;
-        transform.SetParent(targetSlot, true);
+        transform.SetParent(targetSlot, false);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.Euler(0f, 0f, 180f);
 
         if (revealOnArrival)
         {
@@ -131,8 +144,8 @@ public class CardVisual : MonoBehaviour
         float duration = 0.4f;
         float elapsed = 0f;
 
-        Quaternion startRotation = transform.rotation;
-        Quaternion endRotation = startRotation * Quaternion.Euler(0f, 0f, 180f);
+        Quaternion startRot = transform.localRotation;
+        Quaternion endRot = Quaternion.identity;
         bool textureChanged = false;
 
         while (elapsed < duration)
@@ -140,7 +153,7 @@ public class CardVisual : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / duration);
 
-            transform.rotation = Quaternion.Slerp(startRotation, endRotation, t);
+            transform.localRotation = Quaternion.Slerp(startRot, endRot, t);
 
             // Change artwork halfway through flip
             if (!textureChanged && t >= 0.5f)
@@ -152,9 +165,7 @@ public class CardVisual : MonoBehaviour
             yield return null;
         }
 
-        transform.rotation = endRotation;
-        Vector3 euler = transform.eulerAngles;
-        transform.rotation = Quaternion.Euler(0f, Mathf.Round(euler.y / 90f) * 90f, 0f);
+        transform.localRotation = Quaternion.identity;
 
         if (cardMaterial != null) cardMaterial.mainTexture = frontTexture;
         isFlipping = false;
@@ -169,6 +180,8 @@ public class CardVisual : MonoBehaviour
     {
         if (delay > 0f)
             yield return new WaitForSeconds(delay);
+
+        transform.SetParent(null, true);
 
         Vector3 startPos = transform.position;
         Quaternion startRot = transform.rotation;

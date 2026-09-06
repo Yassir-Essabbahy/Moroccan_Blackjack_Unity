@@ -12,7 +12,7 @@ public class VHSRendererFeature : ScriptableRendererFeature
     public class Settings
     {
         public Material material;
-        public RenderPassEvent renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+        public RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
     }
 
     public Settings settings = new Settings();
@@ -30,6 +30,7 @@ public class VHSRendererFeature : ScriptableRendererFeature
             Debug.LogWarning("VHSRendererFeature: Material is missing.");
             return;
         }
+        m_ScriptablePass.renderPassEvent = settings.renderPassEvent;
         renderer.EnqueuePass(m_ScriptablePass);
     }
 
@@ -43,6 +44,7 @@ public class VHSRendererFeature : ScriptableRendererFeature
         {
             m_Material = settings.material;
             renderPassEvent = settings.renderPassEvent;
+            ConfigureInput(ScriptableRenderPassInput.Color);
             m_TempRTid = Shader.PropertyToID("_VHSTempRT");
 
             if (s_CopyMaterial == null)
