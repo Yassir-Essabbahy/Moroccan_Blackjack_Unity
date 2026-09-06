@@ -17,11 +17,13 @@ public class InputTester : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.S)) game.PlayerStand();
         if (Input.GetKeyDown(KeyCode.N)) game.StartRound();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Debug Testing Hotkeys
         if (Input.GetKeyDown(KeyCode.W)) game.DebugForceWin();
         if (Input.GetKeyDown(KeyCode.L)) game.DebugForceLoss();
         if (Input.GetKeyDown(KeyCode.V)) game.DebugInstantVictory();
         if (Input.GetKeyDown(KeyCode.K)) game.DebugInstantDefeat();
+#endif
     }
 
     public void Hit()

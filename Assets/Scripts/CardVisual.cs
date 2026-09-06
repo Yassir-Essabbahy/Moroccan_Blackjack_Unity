@@ -14,6 +14,9 @@ public class CardVisual : MonoBehaviour
     [SerializeField] private float dealDuration = 0.35f;
     [SerializeField] private float dealArcHeight = 0.2f;
 
+    private static readonly System.Collections.Generic.Dictionary<string, Texture> CardTextureCache = 
+        new System.Collections.Generic.Dictionary<string, Texture>(40);
+
     private Material cardMaterial;
     private bool isFaceDown;
     private Texture frontTexture;
@@ -24,6 +27,15 @@ public class CardVisual : MonoBehaviour
     {
         if (cardRenderer != null)
             cardMaterial = cardRenderer.material;
+    }
+
+    private void OnDestroy()
+    {
+        if (cardMaterial != null)
+        {
+            Destroy(cardMaterial);
+            cardMaterial = null;
+        }
     }
 
     public void SetCard(Card card, bool faceDown = false)
@@ -54,7 +66,13 @@ public class CardVisual : MonoBehaviour
     private Texture LoadCardTexture(Card card)
     {
         string fileName = $"{card.Suit}_{card.Rank}";
-        return Resources.Load<Texture>($"CardArt/{fileName}");
+        if (CardTextureCache.TryGetValue(fileName, out Texture cached))
+            return cached;
+
+        Texture loaded = Resources.Load<Texture>($"CardArt/{fileName}");
+        if (loaded != null)
+            CardTextureCache[fileName] = loaded;
+        return loaded;
     }
 
     public void Reveal()

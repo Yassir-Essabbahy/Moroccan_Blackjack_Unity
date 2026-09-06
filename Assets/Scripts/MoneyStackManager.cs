@@ -26,6 +26,7 @@ public class MoneyStackManager : MonoBehaviour
     [SerializeField] private float impactShakeDuration = 0.16f;
 
     private readonly List<GameObject> spawnedStacks = new List<GameObject>();
+    private Transform tableCamTransform;
 
     private void Awake()
     {
@@ -33,6 +34,13 @@ public class MoneyStackManager : MonoBehaviour
         {
             var mp = GameObject.Find("MoneyPoint");
             if (mp != null) moneyPoint = mp.transform;
+        }
+
+        if (tableCamTransform == null)
+        {
+            var tableCam = GameObject.Find("Cameras/CM_TableOverview");
+            if (tableCam != null) tableCamTransform = tableCam.transform;
+            else if (Camera.main != null) tableCamTransform = Camera.main.transform;
         }
 
         if (audioSource == null)
@@ -117,10 +125,7 @@ public class MoneyStackManager : MonoBehaviour
 
     private IEnumerator TriggerImpactMicroShake()
     {
-        Transform cam = null;
-        var tableCam = GameObject.Find("Cameras/CM_TableOverview");
-        if (tableCam != null) cam = tableCam.transform;
-        if (cam == null && Camera.main != null) cam = Camera.main.transform;
+        Transform cam = tableCamTransform;
         if (cam == null) yield break;
 
         Vector3 originalPos = cam.localPosition;

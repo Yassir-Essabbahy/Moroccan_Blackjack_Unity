@@ -23,28 +23,27 @@ public class ChalkButtonFX : MonoBehaviour
             ApplyFont(0);
     }
 
+    private float glitchTimer;
+    private float currentInterval;
+
     private void OnEnable()
     {
-        StartCoroutine(FontGlitchLoop());
+        currentInterval = Random.Range(minInterval, maxInterval);
+        glitchTimer = 0f;
     }
 
-    private void OnDisable()
-    {
-        StopAllCoroutines();
-    }
-
-    private IEnumerator FontGlitchLoop()
+    private void Update()
     {
         if (fonts == null || fonts.Length <= 1 || label == null)
-            yield break;
+            return;
 
-        while (true)
+        glitchTimer += Time.deltaTime;
+        if (glitchTimer >= currentInterval)
         {
-            float wait = Random.Range(minInterval, maxInterval);
-            yield return new WaitForSeconds(wait);
+            glitchTimer = 0f;
+            currentInterval = Random.Range(minInterval, maxInterval);
 
             int nextFont;
-
             do
             {
                 nextFont = Random.Range(0, fonts.Length);

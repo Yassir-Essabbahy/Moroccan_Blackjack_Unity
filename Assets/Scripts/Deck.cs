@@ -3,7 +3,10 @@ using System.Collections.Generic;
 
 public class Deck
 {
-    private readonly List<Card> cards = new List<Card>();
+    private static readonly Suit[] AllSuits = (Suit[])Enum.GetValues(typeof(Suit));
+    private static readonly Rank[] AllRanks = (Rank[])Enum.GetValues(typeof(Rank));
+
+    private readonly List<Card> cards = new List<Card>(40);
 
     public int RemainingCount => cards.Count;
 
@@ -17,11 +20,12 @@ public class Deck
     {
         cards.Clear();
 
-        foreach (Suit suit in Enum.GetValues(typeof(Suit)))
+        for (int s = 0; s < AllSuits.Length; s++)
         {
-            foreach (Rank rank in Enum.GetValues(typeof(Rank)))
+            Suit suit = AllSuits[s];
+            for (int r = 0; r < AllRanks.Length; r++)
             {
-                cards.Add(new Card(suit, rank));
+                cards.Add(new Card(suit, AllRanks[r]));
             }
         }
     }

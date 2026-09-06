@@ -23,9 +23,12 @@ public class VictorySequenceController : MonoBehaviour
     [SerializeField] private AudioClip victoryStinger;
 
     public bool IsVictoryActive { get; private set; }
+    private BlackjackGame cachedGame;
 
     private void Awake()
     {
+        cachedGame = FindAnyObjectByType<BlackjackGame>();
+
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
 
@@ -43,9 +46,10 @@ public class VictorySequenceController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            var game = FindAnyObjectByType<BlackjackGame>();
-            if (game != null)
-                game.ResetMatch();
+            if (cachedGame == null)
+                cachedGame = FindAnyObjectByType<BlackjackGame>();
+            if (cachedGame != null)
+                cachedGame.ResetMatch();
         }
         else if (Input.GetKeyDown(KeyCode.Escape))
         {

@@ -71,13 +71,13 @@ public class PenaltyStation : MonoBehaviour
 
     private IEnumerator CameraShakeRoutine()
     {
-        Transform cam = penaltyCameraTransform;
-        if (cam == null)
+        if (penaltyCameraTransform == null)
         {
             var go = GameObject.Find("Cameras/CM_PenaltyStation");
-            if (go != null) cam = go.transform;
+            if (go != null) penaltyCameraTransform = go.transform;
         }
 
+        Transform cam = penaltyCameraTransform;
         if (cam == null) yield break;
 
         Vector3 originalPos = cam.localPosition;

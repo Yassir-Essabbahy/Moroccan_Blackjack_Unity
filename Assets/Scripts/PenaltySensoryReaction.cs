@@ -149,11 +149,24 @@ public class PenaltySensoryReaction : MonoBehaviour
         ringingSource = null;
     }
 
+    private void OnDestroy()
+    {
+        if (fadeTexture != null)
+        {
+            Destroy(fadeTexture);
+            fadeTexture = null;
+        }
+        StopRinging();
+    }
+
     private void LateUpdate()
     {
         if (!recovering) return;
-        if (mainCamera == null) mainCamera = Camera.main;
-        if (mainCamera == null) return;
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null) return;
+        }
 
         if (!cameraPositionCached)
         {
