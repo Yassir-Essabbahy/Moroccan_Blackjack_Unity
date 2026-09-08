@@ -4399,25 +4399,25 @@ MonoBehaviour:
   minimumReadableDuration: 2
   charactersPerSecond: 18
   playerWins:
-  - line: I don't Think You Could Keep It Up
+  - line: Ha7na nchufo wach t9dr tkml haka
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   dealerWins:
-  - line: The house takes this one.
+  - line: Hadi dyal dar
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   pushes:
-  - line: A tie. We go again.
+  - line: ta3adol ? hmmm 3awd 3awd
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   playerBusts:
-  - line: Too risky. Better luck next round
+  - line: Ghamrti fhadi, tr7 jay
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   dealerBusts:
-  - line: You got me this time
+  - line: Rb7tini had lmra
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   victoryLines:
-  - line: Your debt is settled in full. Take your hands and get out.
+  - line: Credit dyalk rah tkhlss, hezz ydik ou sir b7alek
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
   defeatLines:
-  - line: Five broken fingers and an empty wallet. You have nothing left.
+  - line: 5 dyal sb3an mhrssin ou bztam khawi, nod sir b7alek
     voice: {fileID: 8300000, guid: f097b08985151e94eaffb4f637f16e95, type: 3}
 --- !u!82 &963819451
 AudioSource:
@@ -7972,7 +7972,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1547649014}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.13209337, y: 0.33823937, z: -0.04801604, w: 0.9305052}
+  m_LocalRotation: {x: 0.13900918, y: 0.33787295, z: -0.050529946, w: 0.9294972}
   m_LocalPosition: {x: -255.58835, y: 1.65, z: -227.71413}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
